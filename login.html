@@ -1,92 +1,196 @@
-<!-- STATE: TIDAK SUPPORT HP -->
-<div ng-if="state === 'nosupport'" class="alert alert-danger mt-5 text-center">
-  <h4>Perangkat Tidak Didukung</h4>
-  <p>Silakan gunakan Laptop / Komputer</p>
-</div>
+ <script type="text/ng-template" id="login.html">
+        <div ng-show="state == 'nosupport'">
+          <h3>Perangkat tidak didukung</h3>
+          <h4>CBT-X-Simulasi didesain untuk Laptop/PC dengan pengoperasian menggunakan mouse. Penggunaan smartphone tidak disarankan karena tidak ada nilai edukasinya sama sekali. Ujian komputer dioperasikan menggunakan komputer tradisional, bukan komputer berbasis layar sentuh</h4>
+          <h4>Harap menggunakan/meminjam PC/laptop dengan mouse dan keyboard untuk memaksimalkan pengalaman</h4>
+          <p>User Agent: {{ userAgent }}</p>
+        </div>
+        <div ng-show="state == 'first'">
+            <div class="row">
+              <div class="col-md-12 alert alert-info">
+                <h5>
+                Aplikasi CBT-X-Simulasi ini dibuat untuk membantu calon peserta ujian PPPK dalam penguasaan aplikasi ujian berbasis komputer terutama terkait pengoperasian keyboard dan mouse.
+                <br>Aplikasi ini dibuat sebagai tindak lanjut dari uji simulasi penggunaan CAT BKN bagi Calon Peserta PPPK beberapa instansi sebanyak ~5200 orang.
+                <br>Pada uji simulasi tersebut, ditemukan masih diperlukannya pelatihan lebih lanjut terkait keterampilan dalam penggunaan komputer (terutama mouse/keyboard) dan aplikasi.
+                <br>Soal-soal dalam ujian ini merupakan soal dummy bukan berdasarkan soal sebenarnya, semata-mata untuk melatih calon peserta.
+                </h5>
+              </div>
+            </div>
+            <hr>
+            <h4>Petunjuk Pengoperasian Mouse</h4>
+            <div class="row">
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-1.webm" type="video/webm">
+				  </video><br>
+                  Gerakkan mouse untuk menggerakkan penunjuk / pointer / panah di layar
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-2.webm" type="video/webm">
+				  </video><br>
+                  Pilih sesuatu di layar dengan menggerakan penunjuk dan menekan tombol di sebelah kiri (Klik)
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-3.webm" type="video/webm">
+				  </video><br>
+                  XX HINDARI KLIK SAMBIL MENGGERAKKAN MOUSE XX
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-4.webm" type="video/webm">
+				  </video><br>
+                  Putar roda di tengah ke atas/bawah untuk menggulung layar, melihat isi halaman yang tidak nampak.
+                </div>
+                <div class="col-md-12">
+                  <a class="btn btn-success btn-block" href="LATIHAN_MOUSE.html">KLIK INI UNTUK LATIHAN MENGGUNAKAN MOUSE</a>
+                </div>
+            </div>
+            <hr>
+            <h4>Sekarang coba lakukan gulung layar ke bawah...</h4>
+            <hr>
+            <h4>Petunjuk Pengoperasian Keyboard</h4>
+            <div class="row">
+                <div class="col-md-3">
+                  <img src="static/keyboard-1.gif" class="thumbnail img-fluid" ><br>
+                  Untuk mengisi teks pada kotak, arahkan mouse ke kotak teks yang diisi dan lakukan KLIK sampai tanda garis | berkedip di kotak teks yang dituju.
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-2.gif" class="thumbnail img-fluid" ><br>
+                  Jika ingin menghapus gunakan tombol BACKSPACE (<-) untuk menghapus bagian kiri tanda garis | berkedip, atau DELETE untuk menghapus di bagian kanan tanda garis | berkedip
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-3.gif"class="thumbnail img-fluid" ><br>
+                  Gunakan tombol panah kiri dan kanan untuk menggerakkan posisi tanda garis | berkedip, atau gunakan klik mouse untuk memindahkan tanda garis | berkedip
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-4.gif" class="thumbnail img-fluid" ><br>
+                  Tekan tombol SHIFT+(HURUF) untuk mengetik huruf KAPITAL, atau nyalakan CAPS LOCK agar segala huruf yang diketik menjadi KAPITAL
+                </div>
+                <div class="col-md-12">
+                  <a class="btn btn-success btn-block" href="LATIHAN_KEYBOARD.html">KLIK INI UNTUK LATIHAN MENGGUNAKAN KEYBOARD</a>
+                </div>
+            </div>
+            <hr>
+            <h4>Sekarang coba lakukan gulung layar ke bawah...</h4>
+            <hr>
+            
+           
 
-<!-- STATE: HALAMAN AWAL -->
-<div ng-if="state === 'first'" class="text-center mt-5">
-  <h3>SIMULASI CBT</h3>
-  <p>Ujian Berbasis Komputer</p>
-  <button class="btn btn-primary btn-lg" ng-click="mulai()">
-    Mulai
-  </button>
-</div>
-<hr>
+          <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-6">
+              <h3>Mohon baca petunjuk dengan baik</h3>
+              Selamat Datang di CBT-X-Simulasi PPPK<br>
+              Aplikasi sederhana ini digunakan untuk mengenalkan Bapak/Ibu terhadap tata cara penggunaan aplikasi Ujian berbasis Komputer<br>
+              Sebelum menggunakan, <strong>harap catat data kredensial berikut di atas kertas untuk proses login</strong><br>
+              <strong>PASTIKAN KETIKA LOGIN MENGGUNAKAN DATA BERIKUT, JANGAN SAMPAI SALAH KETIK SEDIKITPUN</strong>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><strong>NIK</strong></td>
+                        <td>{{real.nik}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NO PESERTA</strong></td>
+                        <td>{{real.no_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN PESERTA</strong></td>
+                        <td>{{real.pin_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN SESI</strong></td>
+                        <td>{{real.pin_sesi}}</td>
+                    </tr>
 
-<a href="keyboard.html" class="btn btn-primary w-100 mb-2">
-  🎹 Latihan Keyboard
-</a>
+                </tbody>
+            </table>
+            <h4>Jika sudah dicatat, silahkan klik tombol "SAYA SIAP IKUT SIMULASI" di bawah ini. Anda akan menuju ke halaman Login, isi seluruh kredensial ke kotak teks yang sesuai. <strong>DATA AKAN DISEMBUNYIKAN DARI LAYAR</strong></h4>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary btn-block" ng-click="mulai()">SAYA SIAP IKUT SIMULASI</button>
+            </div>
+            
+            </div>
+            <div class="col-md-3"></div>
+          </div>
+           
 
-<a href="mouse.html" class="btn btn-success w-100">
-  🖱️ Latihan Mouse
-</a>
+        </div>
+        <div ng-show="state == 'login'">
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="confirmationModalLabel">Konfirmasi</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Anda akan memasuki sistem CBT-X-Simulasi PPPK<br>
+                        Aplikasi ini tidak terafiliasi dengan CAT Badan Kepegawaian Negara
+                        dan hanya digunakan untuk keperluan simulasi, pembelajaran bagi calon peserta ujian CAT agar memahami cara mengoperasikan komputer.<br>
+                        Klik IYA bila Anda SETUJU
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
+                      <button type="button" class="btn btn-success" data-bs-dismiss="modal" ng-click="realLogin()">Ya</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4 align-center">
+                <div class="alert bg-primary">
+                <form id="loginForm" action="index.php" method="post">
+                    <input class="form-control" placeholder="NIK" ng-model="entry.nik"><br>
+                    <input class="form-control" placeholder="NO PESERTA" ng-model="entry.no_peserta"><br>
+                    <input class="form-control" placeholder="PIN PESERTA" ng-model="entry.pin_peserta"><br>
+                    <input class="form-control" placeholder="PIN SESI" ng-model="entry.pin_sesi"><br>
+                    <div class="d-grid gap-2">
+                      <button class="btn bg-success btn-primary" type="button" ng-click="login()">Masuk</button>
+                    </div>
+                   
+                </form>
+                <div class="alert alert-danger" ng-show="error">{{error}}</div>
+              </div>
+            </div>
+            <div class="col-md-4"></div>
+            </div>
+            <hr>
+            <small><i>HINT (TIDAK AKAN MUNCUL KETIKA UJIAN YANG SEBENARNYA): Pastikan jangan sampai salah isi. Pada ujian sebenarnya, Anda harus mengisi data sesuai apa yang tertulis di Kartu Peserta. 
+              Khusus ujian simulasi ini, Anda harus mengisi data NIK/No Peserta/PIN Peserta/PIN Sesi yang diberikan sebelumnya diberikan pada halaman awal (sebelum klit "SAYA SIAP IKUT SIMULASI"). 
+              Jika terdapat error, perbaikan isiannya.
+               Klik pada bagian yang salah ketik sampai tanda garis | berkedip berpindah kemudian tekan BACKSPACE (<-) untuk menghapus di sebelah kiri tanda garis | berkedip atau tekan DELETE untuk menghapus karakter di sebelah kanan tanda garis | berkedip. 
+               Untuk membuat huruf besar, nyalakan CAPS LOCK dengan menekan tombol CAPS LOCK sampai tanda lampunya menyala.
+               Jika Anda lupa mencatat, <a href="#" ng-click="ulangiSimulasi()">klik ini</a> untuk mengulang. </i></small>
 
-<!-- STATE: LOGIN -->
-<div ng-if="state === 'login'" class="mt-4">
-  <h4>Login Peserta</h4>
+        </div>
 
-  <div class="alert alert-danger" ng-if="error">
-    {{ error }}
-  </div>
+        <div ng-show="state == 'start'">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><strong>NIK</strong></td>
+                        <td>{{real.nik}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NO PESERTA</strong></td>
+                        <td>{{real.no_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN PESERTA</strong></td>
+                        <td>{{real.pin_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN SESI</strong></td>
+                        <td>{{real.pin_sesi}}</td>
+                    </tr>
 
-  <div class="row">
-    <div class="col-md-6 mb-2">
-      <label>NIK</label>
-      <input type="text" class="form-control" ng-model="entry.nik">
-    </div>
+                </tbody>
+            </table>
+            <button class="btn btn-primary" ng-click="mulaiUjian()">Mulai Ujian</button>
+        </div>
 
-    <div class="col-md-6 mb-2">
-      <label>No Peserta</label>
-      <input type="text" class="form-control" ng-model="entry.no_peserta">
-    </div>
-
-    <div class="col-md-6 mb-2">
-      <label>PIN Peserta</label>
-      <input type="text" class="form-control" ng-model="entry.pin_peserta">
-    </div>
-
-    <div class="col-md-6 mb-2">
-      <label>PIN Sesi</label>
-      <input type="text" class="form-control" ng-model="entry.pin_sesi">
-    </div>
-  </div>
-
-  <button class="btn btn-success mt-3" ng-click="login()">
-    Login
-  </button>
-</div>
-
-<!-- STATE: KONFIRMASI -->
-<div ng-if="state === 'start'" class="text-center mt-5">
-  <h4>Login Berhasil</h4>
-  <button class="btn btn-danger btn-lg" ng-click="mulaiUjian()">
-    Mulai Ujian
-  </button>
-</div>
-
-<!-- MODAL KONFIRMASI -->
-<div class="modal fade" id="confirmationModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title">Konfirmasi Login</h5>
-      </div>
-
-      <div class="modal-body">
-        Apakah data yang dimasukkan sudah benar?
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Batal
-        </button>
-        <button class="btn btn-primary" ng-click="realLogin()">
-          Ya, Lanjutkan
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
+    </script>
