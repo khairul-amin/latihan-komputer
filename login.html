@@ -1,0 +1,83 @@
+<!-- STATE: TIDAK SUPPORT HP -->
+<div ng-if="state === 'nosupport'" class="alert alert-danger mt-5 text-center">
+  <h4>Perangkat Tidak Didukung</h4>
+  <p>Silakan gunakan Laptop / Komputer</p>
+</div>
+
+<!-- STATE: HALAMAN AWAL -->
+<div ng-if="state === 'first'" class="text-center mt-5">
+  <h3>SIMULASI CBT</h3>
+  <p>Ujian Berbasis Komputer</p>
+  <button class="btn btn-primary btn-lg" ng-click="mulai()">
+    Mulai
+  </button>
+</div>
+
+<!-- STATE: LOGIN -->
+<div ng-if="state === 'login'" class="mt-4">
+  <h4>Login Peserta</h4>
+
+  <div class="alert alert-danger" ng-if="error">
+    {{ error }}
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-2">
+      <label>NIK</label>
+      <input type="text" class="form-control" ng-model="entry.nik">
+    </div>
+
+    <div class="col-md-6 mb-2">
+      <label>No Peserta</label>
+      <input type="text" class="form-control" ng-model="entry.no_peserta">
+    </div>
+
+    <div class="col-md-6 mb-2">
+      <label>PIN Peserta</label>
+      <input type="text" class="form-control" ng-model="entry.pin_peserta">
+    </div>
+
+    <div class="col-md-6 mb-2">
+      <label>PIN Sesi</label>
+      <input type="text" class="form-control" ng-model="entry.pin_sesi">
+    </div>
+  </div>
+
+  <button class="btn btn-success mt-3" ng-click="login()">
+    Login
+  </button>
+</div>
+
+<!-- STATE: KONFIRMASI -->
+<div ng-if="state === 'start'" class="text-center mt-5">
+  <h4>Login Berhasil</h4>
+  <button class="btn btn-danger btn-lg" ng-click="mulaiUjian()">
+    Mulai Ujian
+  </button>
+</div>
+
+<!-- MODAL KONFIRMASI -->
+<div class="modal fade" id="confirmationModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Konfirmasi Login</h5>
+      </div>
+
+      <div class="modal-body">
+        Apakah data yang dimasukkan sudah benar?
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">
+          Batal
+        </button>
+        <button class="btn btn-primary" ng-click="realLogin()">
+          Ya, Lanjutkan
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
