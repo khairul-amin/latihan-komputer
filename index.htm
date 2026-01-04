@@ -1,30 +1,1005 @@
-<!DOCTYPE html>
+
 <html ng-app="app">
 <head>
-  <meta charset="utf-8">
-  <title>CBT-X Simulasi</title>
-
   <link href="static/bootstrap.min.css" rel="stylesheet">
   <script src="static/bootstrap.bundle.min.js"></script>
+<style>
+
+</style>
 </head>
-
-<body class="container-fluid">
-
-  <div class="row bg-dark text-white">
-    <div class="col-md-12">
-      <h4><img src="static/logo.png" height="40"> CBT-X Simulasi PPPK</h4>
+<body class="container-fluid m-0">
+    <div class="row  bg-dark text-white">
+        <div class="col-md-12"><h4><img src="static/logo.png" height="50">CBT-X-Simulasi PPPK</h4> </div>
     </div>
-     </div>
+    <hr>
+    <div class="row">
+        <div class="col-xs-12">
+            <div ng-view>
 
-  <div ng-view></div>
+            </div>
+        </div>
+    </div>
+  
+    <script type="text/ng-template" id="login.html">
+        <div ng-show="state == 'nosupport'">
+          <h3>Perangkat tidak didukung</h3>
+          <h4>CBT-X-Simulasi didesain untuk Laptop/PC dengan pengoperasian menggunakan mouse. Penggunaan smartphone tidak disarankan karena tidak ada nilai edukasinya sama sekali. Ujian komputer dioperasikan menggunakan komputer tradisional, bukan komputer berbasis layar sentuh</h4>
+          <h4>Harap menggunakan/meminjam PC/laptop dengan mouse dan keyboard untuk memaksimalkan pengalaman</h4>
+          <p>User Agent: {{ userAgent }}</p>
+        </div>
+        <div ng-show="state == 'first'">
+            <div class="row">
+              <div class="col-md-12 alert alert-info">
+                <h5>
+                Aplikasi CBT-X-Simulasi ini dibuat untuk membantu calon peserta ujian PPPK dalam penguasaan aplikasi ujian berbasis komputer terutama terkait pengoperasian keyboard dan mouse.
+                <br>Aplikasi ini dibuat sebagai tindak lanjut dari uji simulasi penggunaan CAT BKN bagi Calon Peserta PPPK beberapa instansi sebanyak ~5200 orang.
+                <br>Pada uji simulasi tersebut, ditemukan masih diperlukannya pelatihan lebih lanjut terkait keterampilan dalam penggunaan komputer (terutama mouse/keyboard) dan aplikasi.
+                <br>Soal-soal dalam ujian ini merupakan soal dummy bukan berdasarkan soal sebenarnya, semata-mata untuk melatih calon peserta.
+                </h5>
+              </div>
+            </div>
+            <hr>
+            <h4>Petunjuk Pengoperasian Mouse</h4>
+            <div class="row">
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-1.webm" type="video/webm">
+				  </video><br>
+                  Gerakkan mouse untuk menggerakkan penunjuk / pointer / panah di layar
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-2.webm" type="video/webm">
+				  </video><br>
+                  Pilih sesuatu di layar dengan menggerakan penunjuk dan menekan tombol di sebelah kiri (Klik)
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-3.webm" type="video/webm">
+				  </video><br>
+                  XX HINDARI KLIK SAMBIL MENGGERAKKAN MOUSE XX
+                </div>
+                <div class="col-md-3">
+                  <video autoplay loop muted playsinline>
+				    <source src="static/mouse-4.webm" type="video/webm">
+				  </video><br>
+                  Putar roda di tengah ke atas/bawah untuk menggulung layar, melihat isi halaman yang tidak nampak.
+                </div>
+                <div class="col-md-12">
+                  <a class="btn btn-success btn-block" href="LATIHAN_MOUSE.html">KLIK INI UNTUK LATIHAN MENGGUNAKAN MOUSE</a>
+                </div>
+            </div>
+            <hr>
+            <h4>Sekarang coba lakukan gulung layar ke bawah...</h4>
+            <hr>
+            <h4>Petunjuk Pengoperasian Keyboard</h4>
+            <div class="row">
+                <div class="col-md-3">
+                  <img src="static/keyboard-1.gif" class="thumbnail img-fluid" ><br>
+                  Untuk mengisi teks pada kotak, arahkan mouse ke kotak teks yang diisi dan lakukan KLIK sampai tanda garis | berkedip di kotak teks yang dituju.
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-2.gif" class="thumbnail img-fluid" ><br>
+                  Jika ingin menghapus gunakan tombol BACKSPACE (<-) untuk menghapus bagian kiri tanda garis | berkedip, atau DELETE untuk menghapus di bagian kanan tanda garis | berkedip
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-3.gif"class="thumbnail img-fluid" ><br>
+                  Gunakan tombol panah kiri dan kanan untuk menggerakkan posisi tanda garis | berkedip, atau gunakan klik mouse untuk memindahkan tanda garis | berkedip
+                </div>
+                <div class="col-md-3">
+                  <img src="static/keyboard-4.gif" class="thumbnail img-fluid" ><br>
+                  Tekan tombol SHIFT+(HURUF) untuk mengetik huruf KAPITAL, atau nyalakan CAPS LOCK agar segala huruf yang diketik menjadi KAPITAL
+                </div>
+                <div class="col-md-12">
+                  <a class="btn btn-success btn-block" href="LATIHAN_KEYBOARD.html">KLIK INI UNTUK LATIHAN MENGGUNAKAN KEYBOARD</a>
+                </div>
+            </div>
+            <hr>
+            <h4>Sekarang coba lakukan gulung layar ke bawah...</h4>
+            <hr>
+            
+           
 
-  <!-- LIBRARY -->
-  <script src="static/angular.min.js"></script>
-  <script src="static/angular-route.min.js"></script>
+          <div class="row">
+            <div class="col-md-3"></div>
+            <div class="col-md-6">
+              <h3>Mohon baca petunjuk dengan baik</h3>
+              Selamat Datang di CBT-X-Simulasi PPPK<br>
+              Aplikasi sederhana ini digunakan untuk mengenalkan Bapak/Ibu terhadap tata cara penggunaan aplikasi Ujian berbasis Komputer<br>
+              Sebelum menggunakan, <strong>harap catat data kredensial berikut di atas kertas untuk proses login</strong><br>
+              <strong>PASTIKAN KETIKA LOGIN MENGGUNAKAN DATA BERIKUT, JANGAN SAMPAI SALAH KETIK SEDIKITPUN</strong>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><strong>NIK</strong></td>
+                        <td>{{real.nik}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NO PESERTA</strong></td>
+                        <td>{{real.no_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN PESERTA</strong></td>
+                        <td>{{real.pin_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN SESI</strong></td>
+                        <td>{{real.pin_sesi}}</td>
+                    </tr>
 
-  <!-- APP -->
-  <script src="app.js"></script>
-  <script src="controllers/loginController.js"></script>
-  <script src="controllers/ujianController.js"></script>
+                </tbody>
+            </table>
+            <h4>Jika sudah dicatat, silahkan klik tombol "SAYA SIAP IKUT SIMULASI" di bawah ini. Anda akan menuju ke halaman Login, isi seluruh kredensial ke kotak teks yang sesuai. <strong>DATA AKAN DISEMBUNYIKAN DARI LAYAR</strong></h4>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary btn-block" ng-click="mulai()">SAYA SIAP IKUT SIMULASI</button>
+            </div>
+            
+            </div>
+            <div class="col-md-3"></div>
+          </div>
+           
+
+        </div>
+        <div ng-show="state == 'login'">
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="confirmationModalLabel">Konfirmasi</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Anda akan memasuki sistem CBT-X-Simulasi PPPK<br>
+                        Aplikasi ini tidak terafiliasi dengan CAT Badan Kepegawaian Negara
+                        dan hanya digunakan untuk keperluan simulasi, pembelajaran bagi calon peserta ujian CAT agar memahami cara mengoperasikan komputer.<br>
+                        Klik IYA bila Anda SETUJU
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Tidak</button>
+                      <button type="button" class="btn btn-success" data-bs-dismiss="modal" ng-click="realLogin()">Ya</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4 align-center">
+                <div class="alert bg-primary">
+                <form id="loginForm" action="index.php" method="post">
+                    <input class="form-control" placeholder="NIK" ng-model="entry.nik"><br>
+                    <input class="form-control" placeholder="NO PESERTA" ng-model="entry.no_peserta"><br>
+                    <input class="form-control" placeholder="PIN PESERTA" ng-model="entry.pin_peserta"><br>
+                    <input class="form-control" placeholder="PIN SESI" ng-model="entry.pin_sesi"><br>
+                    <div class="d-grid gap-2">
+                      <button class="btn bg-success btn-primary" type="button" ng-click="login()">Masuk</button>
+                    </div>
+                   
+                </form>
+                <div class="alert alert-danger" ng-show="error">{{error}}</div>
+              </div>
+            </div>
+            <div class="col-md-4"></div>
+            </div>
+            <hr>
+            <small><i>HINT (TIDAK AKAN MUNCUL KETIKA UJIAN YANG SEBENARNYA): Pastikan jangan sampai salah isi. Pada ujian sebenarnya, Anda harus mengisi data sesuai apa yang tertulis di Kartu Peserta. 
+              Khusus ujian simulasi ini, Anda harus mengisi data NIK/No Peserta/PIN Peserta/PIN Sesi yang diberikan sebelumnya diberikan pada halaman awal (sebelum klit "SAYA SIAP IKUT SIMULASI"). 
+              Jika terdapat error, perbaikan isiannya.
+               Klik pada bagian yang salah ketik sampai tanda garis | berkedip berpindah kemudian tekan BACKSPACE (<-) untuk menghapus di sebelah kiri tanda garis | berkedip atau tekan DELETE untuk menghapus karakter di sebelah kanan tanda garis | berkedip. 
+               Untuk membuat huruf besar, nyalakan CAPS LOCK dengan menekan tombol CAPS LOCK sampai tanda lampunya menyala.
+               Jika Anda lupa mencatat, <a href="#" ng-click="ulangiSimulasi()">klik ini</a> untuk mengulang. </i></small>
+
+        </div>
+
+        <div ng-show="state == 'start'">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><strong>NIK</strong></td>
+                        <td>{{real.nik}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NO PESERTA</strong></td>
+                        <td>{{real.no_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN PESERTA</strong></td>
+                        <td>{{real.pin_peserta}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PIN SESI</strong></td>
+                        <td>{{real.pin_sesi}}</td>
+                    </tr>
+
+                </tbody>
+            </table>
+            <button class="btn btn-primary" ng-click="mulaiUjian()">Mulai Ujian</button>
+        </div>
+
+    </script>
+
+    <script type="text/ng-template" id="ujian.html">
+        <div ng-show="state == 'ujian'">
+        <div class="row">
+            <div class="col-sm-2 bg-light ">
+            <div class="row">
+              <div class="col-sm-2 d-flex align-items-center justify-content-center p-0" ng-repeat="s in soal">
+                  <button class="btn d-block p-2" ng-class="{'btn-primary': (s.no == soal[currentSoal].no), 'btn-danger': (s.no != soal[currentSoal].no && jawaban[s.no].jawaban == null), 'btn-success': (s.no != soal[currentSoal].no && jawaban[s.no].jawaban != null)}" ng-click="bukaSoal(s.no)" ><small>{{ s.no }}</small></button>
+              </div>
+            </div>
+            </div>
+            <div class="col-sm-10">
+              <div class="d-flex justify-content-between">
+                <div class="align-self-start pt-2"><h3>SIMULASI UJIAN: {{ jenisSoal == "biasa"? "Seleksi Kompetensi" : "Wawancara" }}</h3>
+                </div>
+                <div class="align-self-end">
+                  <div class="bg-warning text-white p-2">
+                    <h3> {{ kalkulasiWaktu(currentTimer) }}</h3>
+                    <button class="btn btn-danger" ng-show="bolehSelesai" ng-click="selesaiKah()">Selesai Ujian</button>
+                  </div>
+                </div>
+              </div>
+              <hr>
+            
+            <div><h4><p>{{ soal[currentSoal].no }}. {{ soal[currentSoal].soal }}</p></h4></div>
+            <p>
+            <div class="radio" ng-repeat="opsi in ['A','B','C','D','E']">
+              <label>
+                <h5><input ng-model="x.currentJawaban" type="radio" ng-value="opsi" > {{ opsi + '. ' + soal[currentSoal]['jawaban_' + opsi] }}</h5>
+              </label>
+            </div>
+            
+            
+            <hr>
+            
+            <button class="btn btn-success" ng-click="simpanDanLanjutkan()" ng-show="x.currentJawaban">Simpan dan Lanjutkan</button>
+            
+            <button class="btn btn-warning" ng-click="lewatkan()">Lewatkan</button>
+            </p>
+            </div>
+            </div>
+            <hr>
+            <small>
+            <i>HINT (PETUNJUK INI TIDAK AKAN DIMUNCULKAN KETIKA UJIAN YANG SEBENARNYA)</i><br>
+            <i>Pastikan untuk menyimpan jawaban, pilih pada opsi jawaban lalu klik SIMPAN DAN LANJUTKAN.
+               Jika memilih jawaban tapi klik LEWATKAN, maka jawaban tidak akan tersimpan. 
+               Dalam sisa waktu yang diberikan (di pojok kanan atas), 
+               pastikan semua soal terjawab semua (nomor soal berwarna hijau semua).
+                Anda dapat mengerjakan soal secara acak tidak harus dimulai dari nomor 1, caranya tinggal klik nomor soal di sebelah kiri 
+                (jawaban saat ini tidak akan tersimpan jika Anda klik nomor soal sebelum klik SIMPAN DAN LANJUTKAN).</i></small>
+
+            
+        </div>
+        <div ng-show="state == 'finish'">
+            <h3>Nilai Anda</h3>
+            <table class="table">
+                <tbody>
+                    <tr ng-repeat="(key,val) in nilai">
+                        <td><strong>{{ key }}</strong></td>
+                        <td>{{ val }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-primary" ng-click="ulangi()">ULANGI SIMULASI</button>
+        </div>
+    
+
+    </script>
+
 </body>
+<script src="static/angular.min.js" type="application/javascript"></script>
+<script src="static/angular-route.min.js" type="application/javascript"></script>
+<script>function generateRandomDigit(n) {
+    // Generate a random number between 1 and 9 for the first digit
+    const firstDigit = Math.floor(Math.random() * 9) + 1;
+    
+     // Generate the remaining 15 digits (0-9)
+    let remainingDigits = '';
+    for (let i = 0; i < n; i++) {
+        remainingDigits += Math.floor(Math.random() * 10);
+    }
+    
+    // Combine the first digit with the remaining digits to form the full 16-digit number as a string
+    return (firstDigit + remainingDigits).toString();
+}
+
+function generateRandomAlphanumeric() {
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 4; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters[randomIndex];
+    }
+    return result;
+}
+
+
+console.log(generateRandomAlphanumeric());
+
+document.addEventListener('keydown', (e) => {
+    e = e || window.event;
+    if(e.keyCode == 116){
+        e.preventDefault();
+    }
+});
+
+
+app = angular.module('app', ['ngRoute']);
+// Login Controller
+app.controller('loginController', function($scope, $location) {
+
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    isMobile = /android|iphone|ipad|ipod|opera mini|iemobile|wpdesktop|mobile/i.test(userAgent);
+
+    if(isMobile) {
+      $scope.userAgent = userAgent;
+      $scope.state = "nosupport";
+    } else {
+      $scope.state = "first";
+    }
+    var confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    
+    $scope.real = {
+        "nik": generateRandomDigit(8),
+        "no_peserta": generateRandomDigit(10),
+        "pin_peserta": generateRandomAlphanumeric(),
+        "pin_sesi": generateRandomDigit(3)
+    }
+
+    $scope.entry = {
+        "nik": "",
+        "no_peserta": "",
+        "pin_peserta": "",
+        "pin_sesi": "",
+    }
+    $scope.mulai = function() {
+        $scope.state = "login";
+    }
+
+    $scope.login = function() {
+        confirmationModal.show();
+    };
+
+    $scope.realLogin = function() {
+        
+        var confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmationModal.hide();
+
+        
+        if($scope.real.nik != $scope.entry.nik) {
+            $scope.error = "ERROR 001x NIK/No Peserta tidak sesuai"
+            return;
+        }
+
+        if($scope.real.no_peserta != $scope.entry.no_peserta) {
+            $scope.error = "ERROR 001x NIK/No Peserta tidak sesuai"
+            return;
+        }
+
+        if($scope.real.pin_peserta != $scope.entry.pin_peserta) {
+            $scope.error = "ERROR 005x PIN Peserta tidak sesuai"
+            return;
+        }
+
+        if($scope.real.pin_sesi != $scope.entry.pin_sesi) {
+            $scope.error = "ERROR 008x PIN Sesi tidak sesuai"
+            return;
+        }
+
+        $scope.state = "start"
+    }
+
+
+    $scope.ulangi = function() {
+      $location.path('/login');
+    }
+
+    $scope.mulaiUjian = function() {
+        $location.path('/ujian');
+    }
+});
+
+
+// Ujian Controller
+app.controller('ujianController', function($scope, $interval, $location) {
+    $scope.soalBiasa =[
+    {
+      "id": "MANAJERIAL-1",
+      "soal": "Anda diminta atasan untuk membuat laporan bulanan, tetapi Anda tidak tahu caranya. Apa yang Anda lakukan?",
+      "jawaban_A": "Mengarang cerita agar terlihat meyakinkan.",
+      "jawaban_B": "Menggunakan laporan bulan lalu, ubah tanggalnya saja.",
+      "jawaban_C": "Mencari template laporan di internet.",
+      "jawaban_D": "Meminta rekan kerja untuk mengerjakan semuanya.",
+      "jawaban_E": "Bertanya kepada atasan dengan sopan untuk petunjuk.",
+      "jawaban_benar": "E"
+    },
+    {
+      "id": "MANAJERIAL-2",
+      "soal": "Seorang bawahan terlambat masuk kerja, dan alasannya karena kucingnya sedang murung. Apa yang Anda lakukan?",
+      "jawaban_A": "Mengusulkan konseling untuk kucingnya.",
+      "jawaban_B": "Menyuruhnya tetap bekerja sambil menenangkan kucingnya lewat telepon.",
+      "jawaban_C": "Memberikan peringatan keras.",
+      "jawaban_D": "Meminta bukti berupa foto kucing yang murung.",
+      "jawaban_E": "Membahas ulang kebijakan waktu masuk kerja dengan tim.",
+      "jawaban_benar": "E"
+    },
+    {
+      "id": "MANAJERIAL-3",
+      "soal": "Tim Anda mengeluh tentang banyaknya rapat yang tidak produktif. Apa langkah Anda?",
+      "jawaban_A": "Mengurangi rapat dan menggantinya dengan karaoke bersama.",
+      "jawaban_B": "Mengatur rapat di kantin agar suasana lebih santai.",
+      "jawaban_C": "Membuat agenda rapat yang jelas dan tegas.",
+      "jawaban_D": "Meminta semua orang membawa cemilan agar tidak bosan.",
+      "jawaban_E": "Menghapus rapat sama sekali, karena tidak penting.",
+      "jawaban_benar": "C"
+    },
+    {
+      "id": "MANAJERIAL-4",
+      "soal": "Ada konflik kecil antara dua anggota tim. Bagaimana cara Anda menanganinya?",
+      "jawaban_A": "Menyuruh mereka menyelesaikannya dengan adu panco.",
+      "jawaban_B": "Mengabaikannya, berharap konflik hilang sendiri.",
+      "jawaban_C": "Mengundang mereka ke ruang rapat untuk diskusi terbuka.",
+      "jawaban_D": "Memindahkan salah satu dari mereka ke tim lain.",
+      "jawaban_E": "Membawa mereka ke warung kopi untuk ngobrol santai.",
+      "jawaban_benar": "C"
+    },
+    {
+      "id": "MANAJERIAL-5",
+      "soal": "Atasan Anda memberikan tugas mendadak saat Anda sedang cuti. Apa yang Anda lakukan?",
+      "jawaban_A": "Menolak dengan alasan cuti adalah hak asasi.",
+      "jawaban_B": "Mengalihkan tugas tersebut ke rekan kerja tanpa izin.",
+      "jawaban_C": "Menunda tugas hingga cuti selesai.",
+      "jawaban_D": "Segera menyelesaikan tugas di sela waktu cuti.",
+      "jawaban_E": "Mengklarifikasi urgensi tugas kepada atasan dan negosiasi waktu.",
+      "jawaban_benar": "E"
+    },
+    {
+      "id": "MANAJERIAL-6",
+      "soal": "Anda mendapatkan laporan bahwa salah satu anggota tim tidur di jam kerja. Apa yang Anda lakukan?",
+      "jawaban_A": "Membelikan kopi dan berkata, 'Semangat!'",
+      "jawaban_B": "Menganggap itu bagian dari budaya kerja fleksibel.",
+      "jawaban_C": "Memberikan teguran dan mencari tahu alasannya.",
+      "jawaban_D": "Membawa alarm jam dinding ke mejanya.",
+      "jawaban_E": "Meminta anggota tim lain untuk membangunkannya.",
+      "jawaban_benar": "C"
+    },
+    {
+      "id": "MANAJERIAL-7",
+      "soal": "Ada proyek penting, tetapi tim Anda kekurangan anggota. Apa yang Anda lakukan?",
+      "jawaban_A": "Menyuruh semua orang lembur tanpa tambahan insentif.",
+      "jawaban_B": "Merekrut anggota keluarga Anda sebagai tenaga tambahan.",
+      "jawaban_C": "Memprioritaskan tugas berdasarkan urgensi.",
+      "jawaban_D": "Menyelesaikan semuanya sendiri agar lebih cepat.",
+      "jawaban_E": "Mengalihkan proyek ke tim lain.",
+      "jawaban_benar": "C"
+    },
+    {
+      "id": "MANAJERIAL-8",
+      "soal": "Anda lupa password komputer kantor. Apa yang Anda lakukan?",
+      "jawaban_A": "Menyalahkan bawahan atas kejadian ini.",
+      "jawaban_B": "Menggunakan komputer rekan kerja tanpa izin.",
+      "jawaban_C": "Menghubungi IT support untuk reset password.",
+      "jawaban_D": "Mencoba menebak password hingga berhasil.",
+      "jawaban_E": "Membeli komputer baru.",
+      "jawaban_benar": "C"
+    },
+    {
+      "id": "MANAJERIAL-9",
+      "soal": "Rekan kerja Anda memakan bekal Anda di pantry. Apa yang Anda lakukan?",
+      "jawaban_A": "Memakan bekalnya sebagai balasan.",
+      "jawaban_B": "Membuat laporan resmi ke HRD.",
+      "jawaban_C": "Membawa bekal lebih banyak untuk berbagi.",
+      "jawaban_D": "Mengkonfrontasinya dengan sopan.",
+      "jawaban_E": "Mengunci bekal Anda di brankas.",
+      "jawaban_benar": "D"
+    },
+    {
+      "id": "MANAJERIAL-10",
+      "soal": "Anggota tim Anda memberikan ide yang sangat buruk dalam rapat. Apa reaksi Anda?",
+      "jawaban_A": "Berteriak, 'Ide ini luar biasa buruk!'",
+      "jawaban_B": "Diam saja dan berharap orang lain berkomentar.",
+      "jawaban_C": "Mengapresiasi keberaniannya menyampaikan ide.",
+      "jawaban_D": "Langsung mengganti topik pembicaraan.",
+      "jawaban_E": "Menyuruhnya keluar dari rapat.",
+      "jawaban_benar": "C"
+    },
+    {
+        "id": "SOSIOKULTURAL-1",
+        "soal": "Anda bekerja dengan rekan dari budaya yang berbeda dan sering kali terjadi kesalahpahaman. Apa yang Anda lakukan?",
+        "jawaban_A": "Menghindari komunikasi langsung dengan rekan tersebut.",
+        "jawaban_B": "Mencari tahu tentang budayanya dan menyesuaikan komunikasi.",
+        "jawaban_C": "Meminta atasan untuk mengganti rekan kerja.",
+        "jawaban_D": "Berbicara hanya melalui email untuk mengurangi konflik.",
+        "jawaban_E": "Mengabaikan perbedaan dan tetap berkomunikasi seperti biasa.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-2",
+        "soal": "Rekan kerja Anda berbicara dalam bahasa daerah yang tidak Anda mengerti. Apa tindakan Anda?",
+        "jawaban_A": "Meminta mereka berbicara dalam bahasa yang Anda pahami.",
+        "jawaban_B": "Bergabung dan ikut berbicara meskipun tidak mengerti.",
+        "jawaban_C": "Merasa tersinggung dan melapor ke HRD.",
+        "jawaban_D": "Berusaha mempelajari sedikit bahasa tersebut.",
+        "jawaban_E": "Menghindari percakapan dengan mereka sepenuhnya.",
+        "jawaban_benar": "A"
+      },
+      {
+        "id": "SOSIOKULTURAL-3",
+        "soal": "Seorang kolega mengundang Anda untuk menghadiri acara adat di desanya. Apa yang Anda lakukan?",
+        "jawaban_A": "Menolak dengan alasan sibuk.",
+        "jawaban_B": "Menghadiri acara dan mencari tahu maknanya.",
+        "jawaban_C": "Menghadiri acara tapi hanya untuk makan.",
+        "jawaban_D": "Meminta undangan tertulis terlebih dahulu.",
+        "jawaban_E": "Menghindari acara tersebut tanpa alasan.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-4",
+        "soal": "Anda sedang memimpin rapat dengan tim multikultural. Bagaimana cara Anda memulai rapat?",
+        "jawaban_A": "Langsung masuk ke pembahasan inti.",
+        "jawaban_B": "Memperkenalkan diri dan anggota tim secara bergiliran.",
+        "jawaban_C": "Menceritakan lelucon lokal yang tidak semua orang mengerti.",
+        "jawaban_D": "Meminta semua orang diam sebelum Anda berbicara.",
+        "jawaban_E": "Mengabaikan perbedaan budaya dan memulai seperti biasa.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-5",
+        "soal": "Seorang bawahan Anda berasal dari latar belakang budaya yang menghormati senioritas. Bagaimana Anda memotivasi dia?",
+        "jawaban_A": "Memberikan tugas dan memastikan dia tahu Anda adalah atasannya.",
+        "jawaban_B": "Memuji kinerjanya di depan umum.",
+        "jawaban_C": "Memberikan bonus tanpa memberi tahu alasannya.",
+        "jawaban_D": "Menggunakan pendekatan yang menghormati budaya senioritasnya.",
+        "jawaban_E": "Mengabaikan budaya tersebut dan memperlakukannya seperti biasa.",
+        "jawaban_benar": "D"
+      },
+      {
+        "id": "SOSIOKULTURAL-6",
+        "soal": "Anda berada di acara resmi yang melibatkan tokoh-tokoh adat. Apa tindakan Anda?",
+        "jawaban_A": "Meminta tokoh adat untuk mempercepat acara.",
+        "jawaban_B": "Menghormati adat yang berlaku dan mengikuti acara dengan khidmat.",
+        "jawaban_C": "Mengambil foto tanpa izin untuk diposting di media sosial.",
+        "jawaban_D": "Berbicara dengan suara keras saat acara berlangsung.",
+        "jawaban_E": "Mengabaikan aturan adat dan berperilaku seperti biasa.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-7",
+        "soal": "Dalam diskusi, seorang rekan kerja dari budaya lain jarang memberikan pendapat. Apa yang sebaiknya Anda lakukan?",
+        "jawaban_A": "Menyuruhnya untuk bicara lebih banyak.",
+        "jawaban_B": "Memberinya waktu untuk berbicara tanpa mendesaknya.",
+        "jawaban_C": "Menganggap dia tidak memiliki kontribusi.",
+        "jawaban_D": "Meminta orang lain untuk berbicara atas namanya.",
+        "jawaban_E": "Mengabaikan pendapatnya karena tidak aktif.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-8",
+        "soal": "Anda diberi makanan khas daerah saat kunjungan kerja, tapi Anda tidak suka makanannya. Apa yang Anda lakukan?",
+        "jawaban_A": "Menolak secara langsung dengan ekspresi tidak suka.",
+        "jawaban_B": "Menerima dengan sopan dan mencicipinya sedikit.",
+        "jawaban_C": "Memberikan makanan tersebut kepada orang lain di depan tuan rumah.",
+        "jawaban_D": "Mengkritik rasa makanan tersebut dengan jujur.",
+        "jawaban_E": "Menghindari makan sama sekali.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-9",
+        "soal": "Rekan Anda mengundang Anda ke upacara keagamaan yang berbeda dari keyakinan Anda. Apa yang Anda lakukan?",
+        "jawaban_A": "Menolak dengan alasan perbedaan keyakinan.",
+        "jawaban_B": "Menghadiri acara tersebut sebagai bentuk penghormatan.",
+        "jawaban_C": "Datang hanya untuk dokumentasi di media sosial.",
+        "jawaban_D": "Mengabaikan undangan tersebut tanpa penjelasan.",
+        "jawaban_E": "Membahas keyakinan Anda secara panjang lebar saat acara.",
+        "jawaban_benar": "B"
+      },
+      {
+        "id": "SOSIOKULTURAL-10",
+        "soal": "Rekan kerja Anda memperkenalkan kebiasaan baru yang tidak biasa di lingkungan kantor. Apa yang Anda lakukan?",
+        "jawaban_A": "Menolak kebiasaan baru karena tidak relevan.",
+        "jawaban_B": "Mencoba memahami manfaat kebiasaan tersebut.",
+        "jawaban_C": "Langsung mempraktikkannya tanpa berpikir.",
+        "jawaban_D": "Mengabaikan kebiasaan baru tersebut sepenuhnya.",
+        "jawaban_E": "Melaporkannya ke HRD sebagai pelanggaran.",
+        "jawaban_benar": "B"
+      },
+        {
+          "id": "TEKNIS-1",
+          "soal": "Anda diminta untuk memantau antrian layanan di kantor. Apa langkah pertama yang Anda lakukan?",
+          "jawaban_A": "Menggunakan intuisi untuk menentukan prioritas antrian.",
+          "jawaban_B": "Memeriksa sistem antrian elektronik jika tersedia.",
+          "jawaban_C": "Mencatat antrian secara manual di kertas.",
+          "jawaban_D": "Menyuruh semua pelanggan datang kembali keesokan hari.",
+          "jawaban_E": "Menunda tugas hingga ada waktu luang.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-2",
+          "soal": "Saat layanan sedang ramai, ada pelanggan yang mengeluh tentang waktu tunggu. Apa tindakan Anda?",
+          "jawaban_A": "Mengabaikan keluhan pelanggan.",
+          "jawaban_B": "Meminta pelanggan untuk lebih bersabar.",
+          "jawaban_C": "Menjelaskan dengan sopan estimasi waktu tunggu.",
+          "jawaban_D": "Menyuruh pelanggan mengambil nomor antrian baru.",
+          "jawaban_E": "Menyarankan pelanggan untuk datang di hari lain.",
+          "jawaban_benar": "C"
+        },
+        {
+          "id": "TEKNIS-3",
+          "soal": "Sistem layanan mengalami gangguan teknis. Apa langkah terbaik yang dilakukan?",
+          "jawaban_A": "Memberitahu pelanggan bahwa layanan ditunda tanpa penjelasan.",
+          "jawaban_B": "Menghubungi tim IT untuk segera memperbaiki masalah.",
+          "jawaban_C": "Mencoba memperbaiki sistem sendiri meskipun tidak tahu caranya.",
+          "jawaban_D": "Menghentikan semua layanan hingga sistem kembali normal.",
+          "jawaban_E": "Menyarankan pelanggan untuk mencari layanan di kantor lain.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-4",
+          "soal": "Bagaimana cara memastikan data pelanggan yang diinput ke sistem sudah benar?",
+          "jawaban_A": "Menyuruh pelanggan memeriksa sendiri datanya.",
+          "jawaban_B": "Menginput data seadanya tanpa verifikasi.",
+          "jawaban_C": "Melakukan pengecekan ulang data sebelum disimpan.",
+          "jawaban_D": "Mengabaikan kesalahan kecil karena tidak signifikan.",
+          "jawaban_E": "Menyimpan data terlebih dahulu, baru diperbaiki nanti.",
+          "jawaban_benar": "C"
+        },
+        {
+          "id": "TEKNIS-5",
+          "soal": "Apa yang Anda lakukan jika pelanggan meminta layanan yang tidak sesuai prosedur?",
+          "jawaban_A": "Memberikan layanan untuk menghindari konflik.",
+          "jawaban_B": "Menjelaskan dengan sopan prosedur yang benar.",
+          "jawaban_C": "Menyuruh pelanggan membaca peraturan sendiri.",
+          "jawaban_D": "Menyarankan pelanggan melaporkan langsung ke atasan.",
+          "jawaban_E": "Mengabaikan pelanggan yang tidak mengikuti prosedur.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-6",
+          "soal": "Bagaimana cara Anda menangani dokumen pelanggan yang rusak atau tidak lengkap?",
+          "jawaban_A": "Memproses dokumen apa adanya.",
+          "jawaban_B": "Meminta pelanggan melengkapi dokumen yang diperlukan.",
+          "jawaban_C": "Menolak layanan tanpa memberikan solusi.",
+          "jawaban_D": "Mengambil dokumen pelanggan lain sebagai pengganti.",
+          "jawaban_E": "Menyimpan dokumen tersebut tanpa memberitahu pelanggan.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-7",
+          "soal": "Jika ada pelanggan yang merasa bingung dengan formulir yang harus diisi, apa yang Anda lakukan?",
+          "jawaban_A": "Menyuruh pelanggan untuk mencari tahu sendiri.",
+          "jawaban_B": "Menjelaskan pengisian formulir dengan jelas dan sabar.",
+          "jawaban_C": "Membiarkan pelanggan mengisi formulir tanpa panduan.",
+          "jawaban_D": "Mengisi formulir tersebut untuk pelanggan tanpa persetujuan.",
+          "jawaban_E": "Mengabaikan pelanggan dan fokus ke antrian berikutnya.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-8",
+          "soal": "Ketika Anda menemukan kesalahan pada sistem, apa yang sebaiknya dilakukan?",
+          "jawaban_A": "Mengabaikan kesalahan karena tidak mempengaruhi pekerjaan.",
+          "jawaban_B": "Melaporkan kesalahan kepada tim terkait.",
+          "jawaban_C": "Mencoba memperbaiki sendiri tanpa melibatkan tim IT.",
+          "jawaban_D": "Menyuruh pelanggan untuk menunggu tanpa penjelasan.",
+          "jawaban_E": "Menggunakan sistem meskipun ada kesalahan.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-9",
+          "soal": "Apa yang harus dilakukan jika jumlah pelanggan di kantor meningkat drastis?",
+          "jawaban_A": "Membatasi jumlah pelanggan yang dapat dilayani.",
+          "jawaban_B": "Mengatur ulang prioritas layanan dan sumber daya.",
+          "jawaban_C": "Membiarkan pelanggan menunggu tanpa tindakan.",
+          "jawaban_D": "Meminta pelanggan untuk datang di lain waktu.",
+          "jawaban_E": "Menambah jumlah antrian tanpa mempercepat layanan.",
+          "jawaban_benar": "B"
+        },
+        {
+          "id": "TEKNIS-10",
+          "soal": "Sebelum menutup layanan pada akhir hari, apa yang harus Anda lakukan?",
+          "jawaban_A": "Langsung mematikan komputer tanpa backup data.",
+          "jawaban_B": "Memastikan semua data dan dokumen sudah aman disimpan.",
+          "jawaban_C": "Membiarkan komputer menyala hingga keesokan harinya.",
+          "jawaban_D": "Mengabaikan semua prosedur penutupan layanan.",
+          "jawaban_E": "Menyerahkan semuanya kepada rekan kerja yang lain.",
+          "jawaban_benar": "B"
+        },
+        
+            
+    ];
+
+    $scope.soalWawancara = [
+    {
+            "id": "INTEGRITAS-1",
+            "soal": "Anda menemukan rekan kerja yang meninggalkan kantor lebih awal tanpa izin. Apa yang akan Anda lakukan?",
+            "jawaban_A": "Mengabaikan karena itu bukan urusan Anda.",
+            "jawaban_B": "Melaporkannya langsung ke atasan tanpa bicara terlebih dahulu.",
+            "jawaban_C": "Menanyakan alasan kepada rekan kerja tersebut dengan sopan.",
+            "jawaban_D": "Menyebarkan isu tersebut ke rekan kerja lainnya.",
+            "jawaban_E": "Mengikuti tindakan tersebut karena dianggap lumrah.",
+            "jawaban_benar": "C"
+          },
+          {
+            "id": "INTEGRITAS-2",
+            "soal": "Apa yang Anda lakukan jika diminta memanipulasi data laporan oleh atasan?",
+            "jawaban_A": "Menuruti permintaan karena takut konsekuensinya.",
+            "jawaban_B": "Menolak dengan sopan dan menjelaskan alasan penolakan.",
+            "jawaban_C": "Mengubah data dan berharap tidak ketahuan.",
+            "jawaban_D": "Melaporkan langsung ke pihak berwenang.",
+            "jawaban_E": "Bersikap diam dan tidak menindaklanjuti permintaan tersebut.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-3",
+            "soal": "Anda diberi hadiah oleh rekan kerja sebagai ucapan terima kasih. Apa yang Anda lakukan?",
+            "jawaban_A": "Menerima hadiah tanpa mempertimbangkan peraturan.",
+            "jawaban_B": "Menerima hadiah jika nilainya kecil.",
+            "jawaban_C": "Menolak hadiah dengan sopan sesuai aturan yang berlaku.",
+            "jawaban_D": "Menerima hadiah tapi tidak memberitahu siapa pun.",
+            "jawaban_E": "Memberikan hadiah balik untuk menjaga hubungan.",
+            "jawaban_benar": "C"
+          },
+          {
+            "id": "INTEGRITAS-4",
+            "soal": "Apa yang Anda lakukan jika mengetahui ada praktik korupsi di lingkungan kerja Anda?",
+            "jawaban_A": "Melaporkannya ke atasan atau pihak berwenang.",
+            "jawaban_B": "Mengabaikan karena takut terlibat masalah.",
+            "jawaban_C": "Memberitahu rekan kerja lain tanpa tindakan lebih lanjut.",
+            "jawaban_D": "Mengikuti praktik tersebut demi keuntungan pribadi.",
+            "jawaban_E": "Menyimpan informasi tersebut untuk keamanan diri sendiri.",
+            "jawaban_benar": "A"
+          },
+          {
+            "id": "INTEGRITAS-5",
+            "soal": "Seorang rekan meminta Anda untuk menyembunyikan kesalahannya dalam pekerjaan. Apa respons Anda?",
+            "jawaban_A": "Menyetujui permintaan demi menjaga hubungan baik.",
+            "jawaban_B": "Menolak dengan sopan dan menyarankan untuk melaporkan kesalahan tersebut.",
+            "jawaban_C": "Menyetujui tapi meminta imbalan tertentu.",
+            "jawaban_D": "Mengabaikan permintaan tersebut tanpa memberikan tanggapan.",
+            "jawaban_E": "Menyembunyikan kesalahan tapi memberitahu pihak lain secara diam-diam.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-6",
+            "soal": "Bagaimana Anda memastikan bahwa semua dokumen yang Anda kerjakan sesuai dengan peraturan?",
+            "jawaban_A": "Mengandalkan pengalaman tanpa memeriksa ulang peraturan.",
+            "jawaban_B": "Selalu memeriksa dokumen berdasarkan pedoman yang ada.",
+            "jawaban_C": "Menyerahkan tanggung jawab tersebut kepada rekan kerja.",
+            "jawaban_D": "Mengabaikan peraturan selama dokumen terlihat baik.",
+            "jawaban_E": "Hanya memeriksa dokumen jika diminta oleh atasan.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-7",
+            "soal": "Anda diminta untuk mempercepat proses layanan bagi seorang teman dekat. Apa tindakan Anda?",
+            "jawaban_A": "Melakukan percepatan sebagai bentuk bantuan.",
+            "jawaban_B": "Menolak permintaan dan tetap mengikuti prosedur.",
+            "jawaban_C": "Meminta izin atasan sebelum memutuskan.",
+            "jawaban_D": "Mengabaikan permintaan tanpa memberi alasan.",
+            "jawaban_E": "Mengalihkan tugas tersebut kepada rekan lain.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-8",
+            "soal": "Jika Anda menemukan kesalahan dalam laporan yang telah disetujui atasan, apa yang Anda lakukan?",
+            "jawaban_A": "Membiarkan kesalahan tersebut karena sudah disetujui.",
+            "jawaban_B": "Memberitahu atasan tentang kesalahan tersebut dengan sopan.",
+            "jawaban_C": "Mengoreksi kesalahan sendiri tanpa memberitahu atasan.",
+            "jawaban_D": "Melaporkan kesalahan tersebut langsung ke pihak luar.",
+            "jawaban_E": "Mengabaikan kesalahan karena bukan tanggung jawab Anda.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-9",
+            "soal": "Apa tindakan Anda jika melihat rekan kerja menggunakan fasilitas kantor untuk keperluan pribadi?",
+            "jawaban_A": "Membiarkannya karena itu hal sepele.",
+            "jawaban_B": "Menegur dengan sopan dan mengingatkan aturan yang berlaku.",
+            "jawaban_C": "Melaporkan langsung ke atasan tanpa bicara dengan rekan tersebut.",
+            "jawaban_D": "Ikut menggunakan fasilitas kantor untuk keperluan pribadi.",
+            "jawaban_E": "Mengambil tindakan sendiri tanpa melibatkan pihak lain.",
+            "jawaban_benar": "B"
+          },
+          {
+            "id": "INTEGRITAS-10",
+            "soal": "Saat terjadi konflik kepentingan di pekerjaan, bagaimana Anda menyikapinya?",
+            "jawaban_A": "Mengutamakan kepentingan pribadi karena lebih penting.",
+            "jawaban_B": "Melapor kepada pihak berwenang untuk mendapatkan solusi.",
+            "jawaban_C": "Mengambil keputusan sendiri tanpa mempertimbangkan peraturan.",
+            "jawaban_D": "Mengabaikan konflik dan tetap bekerja seperti biasa.",
+            "jawaban_E": "Menghindari pekerjaan terkait konflik tersebut.",
+            "jawaban_benar": "B"
+          }
+    ]
+    $scope.state = "ujian";
+    $scope.jawabanBiasa = {}
+    $scope.jawabanWawancara = {}
+
+    var timer = function() {
+        $scope.currentTimer--;
+        //$scope.hitungNilai();
+        if($scope.currentTimer <= 0) {
+            $interval.cancel(intervalTimer);
+            intervalTimer = null;
+            $scope.selesaiUjian();
+        }
+    };
+
+    $scope.mulaiUjian = function(jenisSoal) {
+      $scope.jenisSoal = jenisSoal;
+      if(jenisSoal == "biasa") {
+        $scope.soal = $scope.soalBiasa;
+        $scope.currentTimer = 600;
+      } else if(jenisSoal == "wawancara") {
+        //alert("Ujian Seleksi Kompetensi sudah selesai, sekarang Anda mengerjakan soal Wawancara. Selesaikan bagian soal ini dalam waktu yang diberikan. Hasil keseluruhan akan ditampilkan setelah Soal Wawancara selesai dikerjakan.")
+        $scope.soal = $scope.soalWawancara;
+        $scope.currentTimer = 120;
+      }
+
+      i = 1;
+      for(soal in $scope.soal) {
+        $scope.soal[soal].no = i;
+        i++;
+      }
+      
+      $scope.jawaban = {}
+
+
+      
+
+      $scope.currentSoal = 0;
+      $scope.x = {
+        "currentJawaban": null
+      }
+
+    
+
+
+      for(i in $scope.soal) {
+          if(!($scope.soal[i].no in $scope.jawaban)) {
+              $scope.jawaban[$scope.soal[i].no] = {"id": $scope.soal[i].id, "jawaban": null};
+          }
+      }
+
+      
+      $scope.bolehSelesai = true;
+      for(x in $scope.jawaban) {
+      if($scope.jawaban[x].jawaban == null) {
+              $scope.bolehSelesai = false;
+              break
+          }
+      }
+      intervalTimer = $interval(timer, 1000);
+    }
+
+    $scope.mulaiUjian("biasa");
+
+    
+
+    $scope.$watch('jawaban', function(oldVar, newVar) {
+        if(oldVar != newVar) {
+            $scope.bolehSelesai = true;
+            for(x in $scope.jawaban) {
+                if($scope.jawaban[x].jawaban == null) {
+                    $scope.bolehSelesai = false;
+                    break
+                }
+            }
+        }
+    }, true);
+
+
+   $scope.bukaSoal = function(s) {
+        $scope.currentSoal = s-1;
+        $scope.x.currentJawaban = $scope.jawaban[$scope.soal[$scope.currentSoal].no].jawaban;
+    }
+
+    $scope.simpanDanLanjutkan = function() {
+        $scope.jawaban[$scope.soal[$scope.currentSoal].no].jawaban = $scope.x.currentJawaban;
+        $scope.currentSoal = ($scope.currentSoal + 1) % $scope.soal.length;
+        $scope.x.currentJawaban = $scope.jawaban[$scope.soal[$scope.currentSoal].no].jawaban;
+    }
+
+    $scope.lewatkan = function() {
+        $scope.currentSoal = ($scope.currentSoal + 1) % $scope.soal.length;
+        $scope.x.currentJawaban = $scope.jawaban[$scope.soal[$scope.currentSoal].no].jawaban;
+    }
+
+    $scope.selesaiKah = function() {
+        if(confirm("Apakah Anda ingin menyelesaikan ujian?")) {
+            $scope.selesaiUjian();
+        }
+    }
+
+    $scope.ulangi = function() {
+      $interval.cancel(intervalTimer);
+      intervalTimer = null;
+      $location.path('/login');
+    }
+   
+
+    $scope.hitungNilai = function() {
+        $scope.nilai = {
+            "MANAJERIAL": 0,
+            "SOSIOKULTURAL": 0,
+            "TEKNIS": 0,
+            "INTEGRITAS": 0
+        }
+
+        for(x in $scope.soalBiasa) {
+            let jenisSoal = $scope.soalBiasa[x]["id"].split("-")[0];
+            let noSoal = $scope.soalBiasa[x]["no"];
+            let jawaban = $scope.soalBiasa[x]["jawaban_benar"];
+            if(jawaban == $scope.jawabanBiasa[noSoal].jawaban) {
+                $scope.nilai[jenisSoal] += 5;
+            }
+
+        }
+
+        for(x in $scope.soalWawancara) {
+            let jenisSoal = $scope.soalWawancara[x]["id"].split("-")[0];
+            let noSoal = $scope.soalWawancara[x]["no"];
+            let jawaban = $scope.soalWawancara[x]["jawaban_benar"];
+            if(jawaban == $scope.jawabanWawancara[noSoal].jawaban) {
+                $scope.nilai[jenisSoal] += 5;
+            }
+
+        }
+    }
+
+    $scope.selesaiUjian = function() {
+      if($scope.jenisSoal == "biasa") {
+        $interval.cancel(intervalTimer);
+        intervalTimer = null;
+        $scope.jawabanBiasa = JSON.parse(JSON.stringify($scope.jawaban));
+        $scope.mulaiUjian("wawancara");
+      } else if ($scope.jenisSoal == "wawancara") {
+        $interval.cancel(intervalTimer);
+        intervalTimer = null;
+        $scope.jawabanWawancara = JSON.parse(JSON.stringify($scope.jawaban));
+        $scope.hitungNilai();
+        $scope.state = "finish";
+      }
+    }
+
+    
+
+    
+   
+
+    var pad = function(angka, size) {
+        var s = String(angka);
+        while (s.length < (size || 2)) {s = "0" + s;}
+        return s;
+    }
+
+    $scope.kalkulasiWaktu = function(detik) {
+        var jam = Math.floor(detik / 3600);
+        var menit = Math.floor(detik / 60) % 60;
+        var detik = detik - (jam*3600) - (menit * 60);
+
+        return pad(jam,2) + ":" + pad(menit,2) + ":" + pad(detik,2);
+        
+    }
+
+
+
+
+});
+
+app.config(function($routeProvider) {
+    $routeProvider
+        .when('/login', {
+            templateUrl: 'login.html',
+            controller: 'loginController'
+        })
+        .when('/ujian', {
+            templateUrl: 'ujian.html',
+            controller: 'ujianController'
+        })
+        .otherwise({
+            redirectTo: '/login'
+        });
+});
+
+
+</script>
 </html>
