@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,8 +16,6 @@
       padding: 10px;
       font-family: Arial, sans-serif;
       font-size: 18px;
-      color: #333;
-      text-align: left;
       border-bottom: 1px solid #ccc;
     }
 
@@ -30,129 +27,150 @@
   </style>
 </head>
 <body>
-  <div id="info">
-    <div>Stage: <span id="stage">1</span></div>
-    <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">50</span></div>
-    <a href="SIMULASI.html">KLIK INI UNTUK KEMBALI KE CBT-X-Simulasi</a>
-  </div>
-  <canvas id="gameCanvas"></canvas>
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
 
-    // Mengatur ukuran canvas agar tidak menutupi info di atas
-    const infoHeight = document.getElementById('info').offsetHeight;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - infoHeight;
+<div id="info">
+  <div>Stage: <span id="stage">1</span></div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">20</span></div>
+  <a href="SIMULASI.html">KLIK INI UNTUK KEMBALI KE CBT-X-Simulasi</a>
+</div>
 
-    // Elemen HTML untuk informasi
-    const stageElement = document.getElementById('stage');
-    const currentTargetElement = document.getElementById('currentTarget');
-    const targetCountElement = document.getElementById('targetCount');
+<canvas id="gameCanvas"></canvas>
 
-    // Variabel permainan
-    let stage = 1; // Tahap permainan
-    let targetCount = 50; // Jumlah target per tahap
-    let currentTarget = 0; // Target saat ini
-    let targetPosition = getRandomPosition();
-    let isProcessing = false; // Flag untuk mencegah aksi berulang
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-    // Fungsi mendapatkan posisi random
-    function getRandomPosition() {
-      const x = Math.random() * (canvas.width - 200) + 50;
-      const y = Math.random() * (canvas.height - 100) + 50;
-      return { x, y };
+const infoHeight = document.getElementById('info').offsetHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - infoHeight;
+
+const stageElement = document.getElementById('stage');
+const currentTargetElement = document.getElementById('currentTarget');
+const targetCountElement = document.getElementById('targetCount');
+
+let stage = 1;
+let targetCount = 20;
+let currentTarget = 0;
+let targetPosition = getRandomPosition();
+let isProcessing = false;
+
+function getRandomPosition() {
+  return {
+    x: Math.random() * (canvas.width - 200) + 50,
+    y: Math.random() * (canvas.height - 100) + 50
+  };
+}
+
+function drawTarget() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let label = '';
+  let color = '';
+
+  if (stage === 1) {
+    label = 'Sorot ini';
+    color = 'red';
+  } else if (stage === 2) {
+    label = 'Klik kiri';
+    color = 'blue';
+  } else if (stage === 3) {
+    label = 'Klik kanan';
+    color = 'green';
+  }
+
+  ctx.fillStyle = color;
+  ctx.fillRect(targetPosition.x, targetPosition.y, 160, 50);
+
+  ctx.fillStyle = 'white';
+  ctx.font = '20px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, targetPosition.x + 80, targetPosition.y + 25);
+
+  stageElement.textContent = stage;
+  currentTargetElement.textContent = currentTarget + 1;
+  targetCountElement.textContent = targetCount;
+}
+
+// STAGE 1: HOVER
+canvas.addEventListener('mousemove', e => {
+  if (stage !== 1 || isProcessing) return;
+
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
+  if (x >= targetPosition.x && x <= targetPosition.x + 160 &&
+      y >= targetPosition.y && y <= targetPosition.y + 50) {
+
+    isProcessing = true;
+    setTimeout(() => {
+      nextTarget();
+    }, 300);
+  }
+});
+
+// STAGE 2: KLIK KIRI
+canvas.addEventListener('click', e => {
+  if (stage !== 2 || isProcessing) return;
+
+  if (isHit(e)) {
+    isProcessing = true;
+    setTimeout(() => {
+      nextTarget();
+    }, 300);
+  }
+});
+
+// STAGE 3: KLIK KANAN
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault(); // ⛔ matikan menu browser
+  if (stage !== 3 || isProcessing) return;
+
+  if (isHit(e)) {
+    isProcessing = true;
+    setTimeout(() => {
+      nextTarget();
+    }, 300);
+  }
+});
+
+function isHit(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+
+  return (
+    x >= targetPosition.x &&
+    x <= targetPosition.x + 160 &&
+    y >= targetPosition.y &&
+    y <= targetPosition.y + 50
+  );
+}
+
+function nextTarget() {
+  currentTarget++;
+
+  if (currentTarget < targetCount) {
+    targetPosition = getRandomPosition();
+  } else {
+    if (stage < 3) {
+      stage++;
+      currentTarget = 0;
+    } else {
+      alert('🎉 Selamat! Anda telah menyelesaikan latihan mouse');
+      stage = 1;
+      currentTarget = 0;
     }
+    targetPosition = getRandomPosition();
+  }
 
-    // Fungsi menggambar target
-    function drawTarget() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  isProcessing = false;
+  drawTarget();
+}
 
-      // Tampilkan target sebagai kotak teks
-      ctx.fillStyle = stage === 1 ? "red" : "blue";
-      ctx.fillRect(targetPosition.x, targetPosition.y, 150, 50);
-      ctx.fillStyle = "white";
-      ctx.font = "20px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(
-        stage === 1 ? "Sorot ini" : "Klik ini",
-        targetPosition.x + 75,
-        targetPosition.y + 25
-      );
+drawTarget();
+</script>
 
-      // Perbarui informasi di elemen HTML
-      stageElement.textContent = stage;
-      currentTargetElement.textContent = currentTarget + 1;
-      targetCountElement.textContent = targetCount;
-    }
-
-    // Tahap 1: Latihan menggerakkan pointer
-    canvas.addEventListener('mousemove', (event) => {
-      if (stage !== 1 || isProcessing) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-
-      // Periksa apakah pointer berada di dalam kotak
-      if (
-        mouseX >= targetPosition.x &&
-        mouseX <= targetPosition.x + 150 &&
-        mouseY >= targetPosition.y &&
-        mouseY <= targetPosition.y + 50
-      ) {
-        isProcessing = true;
-        setTimeout(() => {
-          currentTarget++;
-          if (currentTarget < targetCount) {
-            targetPosition = getRandomPosition();
-          } else {
-            stage = 2; // Lanjut ke tahap 2
-            currentTarget = 0;
-            targetPosition = getRandomPosition();
-          }
-          isProcessing = false;
-          drawTarget();
-        }, 300);
-      }
-    });
-
-    // Tahap 2: Latihan klik kiri
-    canvas.addEventListener('click', (event) => {
-      if (stage !== 2 || isProcessing) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-
-      // Periksa apakah klik berada di dalam kotak
-      if (
-        mouseX >= targetPosition.x &&
-        mouseX <= targetPosition.x + 150 &&
-        mouseY >= targetPosition.y &&
-        mouseY <= targetPosition.y + 50
-      ) {
-        isProcessing = true;
-        setTimeout(() => {
-          currentTarget++;
-          if (currentTarget < targetCount) {
-            targetPosition = getRandomPosition();
-          } else {
-            alert("Selamat! Anda telah menyelesaikan latihan.");
-            stage = 1; // Ulang dari tahap pertama
-            currentTarget = 0;
-            targetPosition = getRandomPosition();
-          }
-          isProcessing = false;
-          drawTarget();
-        }, 300);
-      }
-    });
-
-    // Mulai game
-    drawTarget();
-  </script>
 </body>
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2b014b70c8404fe095b1712cbf392f3c"}'></script><!-- End Cloudflare Web Analytics -->
 </html>
