@@ -1,4 +1,3 @@
-
 // Ujian Controller
 app.controller('ujianController', function($scope, $interval, $location) {
     $scope.soalBiasa =[
@@ -578,5 +577,8 @@ app.controller('ujianController', function($scope, $interval, $location) {
         return pad(jam,2) + ":" + pad(menit,2) + ":" + pad(detik,2);
         
     }
+
+
+
 
 });
