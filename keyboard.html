@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latihan Menggunakan Keyboard</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+    }
+
+    #info {
+      background-color: #f8f9fa;
+      padding: 10px;
+      font-size: 18px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #gameArea {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 60px);
+    }
+
+    input {
+      margin: 20px 0;
+      font-size: 24px;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      display: none;
+    }
+
+    #targetDisplay {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #textBox {
+      margin-top: 20px;
+      font-size: 24px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      background-color: #f8f8f8;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <div>Stage: <span id="stage">1</span></div>
+    <div>Task: <span id="taskDescription"></span></div>
+    <a href="SIMULASI.html">KLIK INI UNTUK KEMBALI KE CBT-X-Simulasi</a>
+  </div>
+  <div id="gameArea">
+    <div id="targetDisplay"></div>
+    <input type="text" id="inputBox">
+    <input type="text" id="input1" placeholder="KOTAK TEKS 1">
+    <input type="text" id="input2" placeholder="KOTAK TEKS 2">
+    <input type="text" id="input3" placeholder="KOTAK TEKS 3">
+    <input type="text" id="input4" placeholder="KOTAK TEKS 4">
+
+    
+  </div>
+  <script>
+    const stageElement = document.getElementById("stage");
+    const taskDescription = document.getElementById("taskDescription");
+    const targetDisplay = document.getElementById("targetDisplay");
+    const inputBox = document.getElementById("inputBox");
+    const input1 = document.getElementById("input1");
+    const input2 = document.getElementById("input2");
+    const input3 = document.getElementById("input3");
+    const input4 = document.getElementById("input4");
+
+    
+
+
+
+    let stage = 1;
+    let currentTask = 0;
+    let targetChar = "";
+    let targetString = "";
+    let attempts = 0;
+
+    function getRandomChar() {
+      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      return chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    function getRandomCharUpperLower() {
+      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      return chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    function getRandomAlphabet() {
+      const chars = "abcdefghijklmnopqrstuvwxyz";
+      return chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    function getRandomCharOfAString(str) {
+        const randomIndex = Math.floor(Math.random() * str.length);
+        return str[randomIndex];
+    }
+
+    function removeSpecificChar(str, charToRemove) {
+        return str.split(charToRemove).join('');
+    }
+
+
+
+    function getRandomString(length = 10) {
+      let str = "";
+      for (let i = 0; i < length; i++) {
+        str += getRandomChar();
+      }
+      return str;
+    }
+
+    function getRandomStringUpperLower(length = 10) {
+      let str = "";
+      for (let i = 0; i < length; i++) {
+        str += getRandomCharUpperLower();
+      }
+      return str;
+    }
+
+    function getRandomUniqueString(length = 10) {
+        const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        if (length > chars.length) {
+            throw new Error("Requested length exceeds the number of unique characters available.");
+        }
+        
+        // Convert the string to an array and shuffle it
+        const shuffledChars = chars.split('').sort(() => Math.random() - 0.5);
+        
+        // Take the first `length` characters
+        return shuffledChars.slice(0, length).join('');
+    }
+
+    function nextStage() {
+      stage++;
+      currentTask = 0;
+      stageElement.textContent = stage;
+
+      switch (stage) {
+        case 2:
+          taskDescription.textContent = "Ketik kombinasi huruf tertentu. Lalu tekan tombol Enter";
+          prepareTypingCombinationTask();
+          break;
+        case 3:
+          taskDescription.textContent = "Ketik huruf kapital dengan Shift.";
+          prepareShiftKeyTask();
+          break;
+        case 4:
+          taskDescription.textContent = "Hapus suatu karakter pada isian teks box";
+          prepareBackspaceTask();
+          break;
+        case 5:
+            taskDescription.textContent = "Isi salah satu kotak teks dengan kombinasi karakter tertentu"
+            prepareMultiTextCombinationTask();
+            break;
+        default:
+          alert("Selamat! Anda telah menyelesaikan semua tahap.");
+          resetGame();
+          break;
+      }
+    }
+
+    function resetGame() {
+      stage = 1;
+      currentTask = 0;
+      stageElement.textContent = stage;
+      taskDescription.textContent = "Tekan tombol huruf atau angka.";
+      prepareRandomKeyTask();
+    }
+
+    function prepareRandomKeyTask() {
+      targetChar = getRandomChar();
+      targetDisplay.textContent = `Tekan tombol: ${targetChar.toUpperCase()}`;
+      inputBox.style.display = "none"; // Sembunyikan textbox
+      input1.style.display = "none";
+      input2.style.display = "none";
+      input3.style.display = "none";
+      input4.style.display = "none";
+    }
+
+    function prepareTypingCombinationTask() {
+      targetString = getRandomString();
+      targetDisplay.textContent = `Klik kotak teks berikut, Ketik: ${targetString}, lalu tekan Enter`;
+      inputBox.style.display = "block"; // Tampilkan textbox
+      inputBox.value = "";
+    }
+
+    function prepareShiftKeyTask() {
+      targetChar = getRandomAlphabet();
+      targetDisplay.textContent = `Tekan tombol SHIFT dan ${targetChar.toUpperCase()} berbarengan untuk membuat huruf kapital ${targetChar.toUpperCase()}`;
+      inputBox.style.display = "none"; // Sembunyikan textbox
+    }
+
+    function prepareBackspaceTask() {
+      text = getRandomUniqueString();
+      toDelete = getRandomCharOfAString(text);
+      targetDisplay.textContent = `Hapus karakter: ${toDelete} pada kotak teks, lalu Tekan Enter`;
+      inputBox.value = text;
+      inputBox.style.display = "block"; // Tampilkan kotak teks
+    }
+
+    function prepareMultiTextCombinationTask() {
+        inputBox.style.display = "none";
+        input1.style.display = "block";
+        input2.style.display = "block";
+        input3.style.display = "block";
+        input4.style.display = "block";
+
+        randomTextBox = Math.floor(Math.random() * 4) + 1;
+        targetString = getRandomStringUpperLower();
+        targetDisplay.textContent = `Klik kotak teks ${randomTextBox}, ketik ${targetString} lalu tekan Enter`;
+
+        input1.value = "";
+        input2.value = "";
+        input3.value = "";
+        input4.value = ""; 
+
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (stage === 1) {
+        // Tahap 1: Tekan tombol huruf/angka
+        if (event.key.toLowerCase() === targetChar.toLowerCase()) {
+          currentTask++;
+          if (currentTask < 25) {
+            prepareRandomKeyTask();
+          } else {
+            nextStage();
+          }
+        }
+      } else if (stage === 2) {
+        // Tahap 2: Ketik kombinasi huruf
+        if (inputBox.value === targetString) {
+          currentTask++;
+          if (currentTask < 5) {
+            prepareTypingCombinationTask();
+          } else {
+            nextStage();
+          }
+        }
+      } else if (stage === 3) {
+        // Tahap 3: Ketik huruf kapital
+        if (event.key === targetChar.toUpperCase() && event.shiftKey) {
+          currentTask++;
+          if (currentTask < 25) {
+            prepareShiftKeyTask();
+          } else {
+            nextStage();
+          }
+        }
+      } else if (stage === 4) {
+        if (inputBox.value === removeSpecificChar(text, toDelete)) {
+          currentTask++;
+          if (currentTask < 5) {
+            prepareBackspaceTask();
+          } else {
+            nextStage();
+          }
+        } else {
+            if(event.key === "Enter") {
+                inputBox.value = text;
+            }
+        } 
+    } else if(stage === 5) {
+        if(document.getElementById("input" + randomTextBox).value === targetString) {
+          currentTask++;
+          if (currentTask < 5) {
+            prepareMultiTextCombinationTask();
+          } else {
+            nextStage();
+          }
+        } else {
+            if(event.key === "Enter") {
+                
+            }
+        }
+            
+    }});
+
+    // Mulai permainan
+    resetGame();
+  </script>
+</body>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6ba2a144fc4f407781254bbf2313344d"}'></script><!-- End Cloudflare Web Analytics -->
+</html>
