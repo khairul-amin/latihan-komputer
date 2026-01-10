@@ -22,7 +22,6 @@ body {
   flex-wrap: wrap;
 }
 #timer { font-weight: bold; }
-#fail { color:red; font-weight:bold }
 canvas { flex-grow: 1; background: #f0f0f0; }
 #summary { display:none; padding:20px; }
 table { width:100%; border-collapse:collapse; }
@@ -36,9 +35,8 @@ td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">5</span></div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
   <div id="timer">⏱ 0.0s</div>
-  <div id="fail" style="display:none">❌ Gagal: 0</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -59,7 +57,6 @@ td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const timerEl = document.getElementById('timer');
-const failEl = document.getElementById('fail');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
@@ -67,32 +64,25 @@ canvas.height = window.innerHeight - document.getElementById('info').offsetHeigh
 let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
-let target, dropZone;
-let failCount=0;
 
-// ===== STAGE 7 (SELEKSI AREA) =====
-const BOX_COUNT = 8;
-let boxes = [];
-let selectStart=null;
-let selectRect=null;
+// ===== SELEKSI AREA =====
+let selectStart=null, selectRect=null;
+let selectBoxes=[];
 
-// ===== WARNA =====
+// ===== WARNA PER STAGE =====
 const stageColors={
   1:'#e74c3c',2:'#3498db',3:'#27ae60',
-  4:'#9b59b6',5:'#f39c12',6:'#2c3e50',7:'#34495e'
+  4:'#9b59b6',5:'#f39c12',
+  8:'#2c3e50',9:'#c0392b'
 };
 
 // ===== TIMER =====
-let stageStart=Date.now(),timerInterval;
-const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,6:20,7:45};
+let stageStart=Date.now(), timerInterval;
+const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,8:20,9:45};
 const stageNames={
-  1:'Sorot Kesini',
-  2:'Klik kiri',
-  3:'Klik kanan',
-  4:'Double click',
-  5:'Drag & Drop',
-  6:'Scroll',
-  7:'Seleksi area'
+  1:'Sorot',2:'Klik kiri',3:'Klik kanan',
+  4:'Double click',5:'Drag & Drop',
+  8:'Scroll',9:'Seleksi Area'
 };
 let summary=[];
 
@@ -120,96 +110,56 @@ function randPos(w=170,h=60){
   };
 }
 function hit(e,o){
-  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
-         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
-}
-function rectIntersect(a,b){
-  return !(
-    a.x+a.w < b.x ||
-    a.x > b.x+b.w ||
-    a.y+a.h < b.y ||
-    a.y > b.y+b.h
-  );
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
 
-// ===== RANDOM =====
-function randomizeAll(){
-  target=randPos();
-  if(stage===5){
-    dropZone=randPos(220,110);
-    failCount=0;
-    failEl.style.display='block';
-    failEl.textContent='❌ Gagal: 0';
-  }else{
-    dropZone=null;
-    failEl.style.display='none';
-  }
-
-  if(stage===7){
-    boxes=[];
-    for(let i=0;i<BOX_COUNT;i++){
-      boxes.push({
-        x:Math.random()*(canvas.width-120)+40,
-        y:Math.random()*(canvas.height-120)+40,
-        w:70,h:50,selected:false
-      });
-    }
+// ===== INIT SELEKSI =====
+function initSelectStage(){
+  selectBoxes=[];
+  for(let i=0;i<8;i++){
+    selectBoxes.push({
+      x:Math.random()*(canvas.width-100)+30,
+      y:Math.random()*(canvas.height-100)+30,
+      w:70,h:50,selected:false
+    });
   }
 }
 
 // ===== DRAW =====
+let target;
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Stage 7
-  if(stage===7){
-    boxes.forEach(b=>{
-      ctx.fillStyle=b.selected?'#2ecc71':'#3498db';
+  // ===== STAGE SELEKSI =====
+  if(stage===9){
+    selectBoxes.forEach(b=>{
+      ctx.fillStyle=b.selected?'#2ecc71':'#c0392b';
       ctx.fillRect(b.x,b.y,b.w,b.h);
-      ctx.strokeStyle='#333';
       ctx.strokeRect(b.x,b.y,b.w,b.h);
-
-      ctx.fillStyle='#fff';
-      ctx.font='bold 16px Arial';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.fillText('OBJ',b.x+b.w/2,b.y+b.h/2);
     });
 
     if(selectRect){
       ctx.fillStyle='rgba(52,152,219,0.25)';
       ctx.strokeStyle='#2980b9';
-      ctx.lineWidth=2;
       ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
       ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
     }
     return;
   }
 
-  // Stage lain
-  if(stage===5 && dropZone){
-    ctx.strokeStyle='green';
-    ctx.lineWidth=3;
-    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
-    ctx.fillStyle='green';
-    ctx.font='bold 20px Arial';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText('DROP DI SINI',
-      dropZone.x+dropZone.w/2,
-      dropZone.y+dropZone.h/2);
-  }
-
+  // ===== STAGE LAIN (TIDAK DIUBAH) =====
   ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
 
   ctx.fillStyle='#fff';
-  ctx.font='bold 22px Arial';
+  ctx.font='bold 24px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(stageNames[stage],
-    target.x+target.w/2,
-    target.y+target.h/2);
+  ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
+
+  document.getElementById('stage').textContent=stage;
+  document.getElementById('currentTarget').textContent=currentTarget+1;
+  document.getElementById('targetCount').textContent=targetCount;
 }
 
 // ===== FLOW =====
@@ -219,11 +169,15 @@ function next(){
   setTimeout(()=>{
     currentTarget++;
     if(currentTarget>=targetCount){
-      stopTimer();stage++;currentTarget=0;
-      if(stage>7){showSummary();return;}
+      stopTimer();
+      stage++;
+      currentTarget=0;
+      if(stage===6||stage===7)stage=8;
+      if(stage>9){showSummary();return;}
       startTimer();
     }
-    randomizeAll();
+    if(stage===9) initSelectStage();
+    else target=randPos();
     isProcessing=false;
     draw();
   },300);
@@ -231,56 +185,41 @@ function next(){
 
 // ===== EVENTS =====
 canvas.addEventListener('mousedown',e=>{
-  if(stage===5&&hit(e,target)){
-    dragging=true;
-    dragOffset={x:e.offsetX-target.x,y:e.offsetY-target.y};
-  }
-
-  if(stage===7){
+  if(stage===9){
     selectStart={x:e.offsetX,y:e.offsetY};
     selectRect=null;
   }
 });
-
 canvas.addEventListener('mousemove',e=>{
-  if(stage===1&&hit(e,target))next();
-
-  if(dragging){
-    target.x=e.offsetX-dragOffset.x;
-    target.y=e.offsetY-dragOffset.y;
-    draw();
-  }
-
-  if(stage===7 && selectStart){
+  if(stage===9&&selectStart){
     const x=Math.min(selectStart.x,e.offsetX);
     const y=Math.min(selectStart.y,e.offsetY);
     const w=Math.abs(e.offsetX-selectStart.x);
     const h=Math.abs(e.offsetY-selectStart.y);
     selectRect={x,y,w,h};
 
-    boxes.forEach(b=>{
-      b.selected=rectIntersect(selectRect,b);
+    selectBoxes.forEach(b=>{
+      b.selected=!(
+        b.x+b.w<x||
+        b.x>x+w||
+        b.y+b.h<y||
+        b.y>y+h
+      );
     });
     draw();
   }
 });
-
 canvas.addEventListener('mouseup',()=>{
-  dragging=false;
-
-  if(stage===7 && selectRect){
-    const count=boxes.filter(b=>b.selected).length;
-    if(count>=3){
-      next();
-    }else{
-      boxes.forEach(b=>b.selected=false);
-    }
+  if(stage===9&&selectRect){
+    const count=selectBoxes.filter(b=>b.selected).length;
+    if(count>=3) next();
     selectStart=null;
     selectRect=null;
-    draw();
   }
 });
-
+canvas.addEventListener('mousemove',e=>{
+  if(stage===1&&hit(e,target))next();
+});
 canvas.addEventListener('click',e=>{
   if(stage===2&&hit(e,target))next();
 });
@@ -292,7 +231,7 @@ canvas.addEventListener('dblclick',e=>{
   if(stage===4&&hit(e,target))next();
 });
 canvas.addEventListener('wheel',e=>{
-  if(stage===6){
+  if(stage===8){
     scrollVal+=Math.abs(e.deltaY);
     if(scrollVal>600)next();
   }
@@ -316,7 +255,7 @@ function showSummary(){
 }
 
 // INIT
-randomizeAll();
+target=randPos();
 startTimer();
 draw();
 </script>
