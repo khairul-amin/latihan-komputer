@@ -31,7 +31,7 @@ canvas{flex-grow:1;background:#f0f0f0}
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / 10</div>
+  <div>Target: <span id="currentTarget">1</span> / 30</div>
   <div id="timer">⏱ 0.0s</div>
 </div>
 
@@ -53,7 +53,7 @@ canvas.height = window.innerHeight - 60;
 
 let stage = 1;
 let currentTarget = 0;
-const targetCount = 10;
+const targetCount = 30;
 let isProcessing=false;
 
 // ===== TIMER =====
@@ -169,7 +169,7 @@ function next(){
     }
     initStage();
     isProcessing=false;
-  },0);
+  },300);
 }
 
 // ===== INIT STAGE =====
