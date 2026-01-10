@@ -14,20 +14,20 @@ body {
 }
 #info {
   background: #f8f9fa;
-  padding: 14px;
-  font-size: 22px;
+  padding: 10px;
+  font-size: 18px;
   border-bottom: 1px solid #ccc;
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 #timer { font-weight: bold; }
-
 canvas { flex-grow: 1; background: #f0f0f0; }
-
-.bigText {
-  font-size: 24px;
-  font-weight: bold;
-}
+#summary { display:none; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #ccc; padding:8px; text-align:center; }
+.good{color:green;font-weight:bold}
+.bad{color:red;font-weight:bold}
 </style>
 </head>
 
@@ -35,158 +35,212 @@ canvas { flex-grow: 1; background: #f0f0f0; }
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span>/30</div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
   <div id="timer">⏱ 0.0s</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
+<div id="summary">
+  <h2>📊 Rekap Latihan Mouse</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="summaryBody"></tbody>
+  </table>
+</div>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const timerEl = document.getElementById('timer');
+
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - info.offsetHeight;
+canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=5; // langsung test stage penting
-let currentTarget=0;
-let dragging=false;
-let dragOffset={x:0,y:0};
-let selectStart=null;
-let selectRect=null;
+let stage=1,targetCount=30,currentTarget=0,isProcessing=false;
+let dragging=false, dragOffset={x:0,y:0};
+let selectStart=null, scrollVal=0;
 
-let target = {x:100,y:100,w:120,h:60};
-let startPos = {...target};
+let target, dropZone;
 
-let slots = [];
-let slotIndex = 0;
+// ===== TIMER =====
+let stageStart=Date.now(), timerInterval;
+const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,6:40,7:50,8:20,9:45};
+const stageNames={
+  1:'Hover',2:'Klik kiri',3:'Klik kanan',4:'Double click',
+  5:'Drag & Drop',6:'Pindahkan kotak',
+  7:'Susun objek',8:'Scroll',9:'Seleksi area'
+};
+let summary=[];
 
-// ==== DRAW ====
+function startTimer(){
+  stageStart=Date.now();
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const t=((Date.now()-stageStart)/1000).toFixed(1);
+    timerEl.textContent=`⏱ ${t}s`;
+    timerEl.style.color=t<=stageTimeLimit[stage]?'green':'red';
+  },100);
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  const t=((Date.now()-stageStart)/1000).toFixed(1);
+  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageTimeLimit[stage]});
+}
+
+// ===== UTIL =====
+function randPos(w=160,h=50){
+  return {
+    x:Math.random()*(canvas.width-w-40)+20,
+    y:Math.random()*(canvas.height-h-40)+20,
+    w,h
+  };
+}
+function hit(e,o){
+  const r=canvas.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top;
+  return x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h;
+}
+function randomizeAll(){
+  target=randPos();
+  dropZone=randPos(200,100);
+}
+
+// ===== DRAW =====
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // STAGE 7 SLOT
-  if(stage===7){
-    slots.forEach((s,i)=>{
-      ctx.strokeStyle=i===slotIndex?'green':'#aaa';
-      ctx.lineWidth=3;
-      ctx.strokeRect(s.x,s.y,s.w,s.h);
-    });
+  if(stage===5||stage===7){
+    ctx.strokeStyle='green';
+    ctx.lineWidth=3;
+    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+    ctx.fillStyle='#999';
+    ctx.fillText('DROP',
+      dropZone.x+dropZone.w/2,
+      dropZone.y+dropZone.h/2);
   }
 
-  // SELEKSI AREA
-  if(stage===9 && selectRect){
-    ctx.fillStyle='rgba(0,123,255,0.2)';
-    ctx.fillRect(
-      selectRect.x,
-      selectRect.y,
-      selectRect.w,
-      selectRect.h
-    );
-    ctx.strokeStyle='blue';
-    ctx.strokeRect(
-      selectRect.x,
-      selectRect.y,
-      selectRect.w,
-      selectRect.h
-    );
+  if(dragging){
+    ctx.globalAlpha=0.7;
+    ctx.shadowColor='rgba(0,0,0,0.4)';
+    ctx.shadowBlur=15;
   }
 
-  // TARGET
   ctx.fillStyle='#3498db';
   ctx.fillRect(target.x,target.y,target.w,target.h);
+  ctx.shadowBlur=0;
+  ctx.globalAlpha=1;
+
   ctx.fillStyle='#fff';
-  ctx.font='22px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(
-    stage===6?'GESER KOTAK':
-    stage===7?'SUSUN KE SLOT':
-    stage===9?'SELEKSI INI':'',
+  ctx.fillText(stageNames[stage],
     target.x+target.w/2,
-    target.y+target.h/2
-  );
+    target.y+target.h/2);
+
+  document.getElementById('stage').textContent=stage;
+  document.getElementById('currentTarget').textContent=currentTarget+1;
+  document.getElementById('targetCount').textContent=targetCount;
 }
 
-// ==== EVENTS ====
-canvas.onmousedown=e=>{
-  if(hit(e,target)){
+// ===== FLOW =====
+function next(){
+  if(isProcessing)return;
+  isProcessing=true;
+  setTimeout(()=>{
+    currentTarget++;
+    if(currentTarget>=targetCount){
+      stopTimer(); stage++; currentTarget=0;
+      if(stage>9){showSummary();return;}
+      startTimer();
+    }
+    randomizeAll();
+    scrollVal=0;
+    isProcessing=false;
+    draw();
+  },300);
+}
+
+// ===== EVENTS =====
+canvas.addEventListener('mousemove',e=>{
+  if(stage===1&&hit(e,target))next();
+  if(dragging){
+    const r=canvas.getBoundingClientRect();
+    target.x=e.clientX-r.left-dragOffset.x;
+    target.y=e.clientY-r.top-dragOffset.y;
+    draw();
+  }
+});
+canvas.addEventListener('mousedown',e=>{
+  if(stage>=5&&stage<=7&&hit(e,target)){
     dragging=true;
     dragOffset.x=e.offsetX-target.x;
     dragOffset.y=e.offsetY-target.y;
   }
-  if(stage===9){
-    selectStart={x:e.offsetX,y:e.offsetY};
-    selectRect=null;
-  }
-};
-
-canvas.onmousemove=e=>{
-  if(dragging){
-    target.x=e.offsetX-dragOffset.x;
-    target.y=e.offsetY-dragOffset.y;
-    draw();
-  }
-  if(stage===9 && selectStart){
-    selectRect={
-      x:Math.min(selectStart.x,e.offsetX),
-      y:Math.min(selectStart.y,e.offsetY),
-      w:Math.abs(e.offsetX-selectStart.x),
-      h:Math.abs(e.offsetY-selectStart.y)
-    };
-    draw();
-  }
-};
-
-canvas.onmouseup=e=>{
+  if(stage===9)selectStart={x:e.offsetX,y:e.offsetY};
+});
+canvas.addEventListener('mouseup',()=>{
+  if(!dragging)return;
   dragging=false;
 
-  // STAGE 6: PINDAH JARAK
-  if(stage===6){
-    const dx=Math.abs(target.x-startPos.x);
-    if(dx>200){
-      alert('✔ Pindah cukup jauh');
+  if(stage===5||stage===7){
+    const ok=
+      target.x>dropZone.x &&
+      target.x+target.w<dropZone.x+dropZone.w &&
+      target.y>dropZone.y &&
+      target.y+target.h<dropZone.y+dropZone.h;
+
+    if(ok){
+      target.x=dropZone.x+(dropZone.w-target.w)/2;
+      target.y=dropZone.y+(dropZone.h-target.h)/2;
+      draw();
+      setTimeout(next,400);
+      return;
     }
   }
-
-  // STAGE 7: SLOT URUT
-  if(stage===7){
-    const s=slots[slotIndex];
-    if(
-      target.x>s.x && target.x+target.w<s.x+s.w &&
-      target.y>s.y && target.y+target.h<s.y+s.h
-    ){
-      target.x=s.x+10;
-      target.y=s.y+10;
-      slotIndex++;
-      if(slotIndex>=slots.length) alert('✔ Semua slot terisi');
-    }
+  if(stage===6) next();
+});
+canvas.addEventListener('click',e=>{
+  if(stage===2&&hit(e,target))next();
+});
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(stage===3&&hit(e,target))next();
+});
+canvas.addEventListener('dblclick',e=>{
+  if(stage===4&&hit(e,target))next();
+});
+canvas.addEventListener('wheel',e=>{
+  if(stage===8){
+    scrollVal+=Math.abs(e.deltaY);
+    if(scrollVal>600)next();
   }
+});
 
-  // STAGE 9: SELEKSI
-  if(stage===9 && selectRect){
-    if(
-      target.x>=selectRect.x &&
-      target.y>=selectRect.y &&
-      target.x+target.w<=selectRect.x+selectRect.w &&
-      target.y+target.h<=selectRect.y+selectRect.h
-    ){
-      alert('✔ Seleksi berhasil');
-    }
-    selectRect=null;
-    draw();
-  }
-};
-
-function hit(e,o){
-  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
-         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+// ===== SUMMARY =====
+function showSummary(){
+  canvas.style.display='none';
+  document.getElementById('info').style.display='none';
+  document.getElementById('summary').style.display='block';
+  const tbody=document.getElementById('summaryBody');
+  summary.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${s.stage}</td>
+      <td>${s.name}</td>
+      <td>${s.time}s</td>
+      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
-// INIT SLOT
-for(let i=0;i<3;i++){
-  slots.push({x:300+i*160,y:100,w:140,h:80});
-}
-
+// INIT
+randomizeAll();
+startTimer();
 draw();
 </script>
 
