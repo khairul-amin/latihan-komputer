@@ -1,27 +1,31 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Latihan Mouse + Timer</title>
 
 <style>
-body{
-  margin:0;
-  display:flex;
-  flex-direction:column;
-  font-family:Arial, sans-serif;
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
 }
-#info{
-  background:#f8f9fa;
-  padding:10px;
-  font-size:18px;
-  border-bottom:1px solid #ccc;
-  display:flex;
-  justify-content:space-between;
+#info {
+  background: #f8f9fa;
+  padding: 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
-#timer{font-weight:bold}
-canvas{flex-grow:1;background:#f0f0f0}
-#summary{display:none;padding:20px}
+#timer { font-weight: bold; }
+canvas { flex-grow: 1; background: #f0f0f0; }
+#summary { display:none; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 .good{color:green;font-weight:bold}
 .bad{color:red;font-weight:bold}
 </style>
@@ -31,7 +35,7 @@ canvas{flex-grow:1;background:#f0f0f0}
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / 30</div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
   <div id="timer">⏱ 0.0s</div>
 </div>
 
@@ -39,8 +43,12 @@ canvas{flex-grow:1;background:#f0f0f0}
 
 <div id="summary">
   <h2>📊 Rekap Latihan Mouse</h2>
-  <table border="1" width="100%">
-    <tr><th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th></tr>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th>
+      </tr>
+    </thead>
     <tbody id="summaryBody"></tbody>
   </table>
 </div>
@@ -48,27 +56,34 @@ canvas{flex-grow:1;background:#f0f0f0}
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - 60;
+const timerEl = document.getElementById('timer');
 
-let stage = 1;
-let currentTarget = 0;
-const targetCount = 30;
-let isProcessing=false;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
+
+let stage=1,targetCount=30,currentTarget=0,isProcessing=false;
+let dragging=false, dragOffset={x:0,y:0};
+let scrollVal=0;
+
+// ===== SELEKSI AREA =====
+let selectStart=null, selectRect=null;
+let selectBoxes=[];
+
+// ===== WARNA PER STAGE =====
+const stageColors={
+  1:'#e74c3c',2:'#3498db',3:'#27ae60',
+  4:'#9b59b6',5:'#f39c12',
+  8:'#2c3e50',9:'#c0392b'
+};
 
 // ===== TIMER =====
-let stageStart, timerInterval;
-const stageLimit={1:20,2:25,3:25,4:30,5:40,6:20,7:45};
+let stageStart=Date.now(), timerInterval;
+const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,8:20,9:45};
 const stageNames={
-  1:'Hover',
-  2:'Klik kiri',
-  3:'Klik kanan',
-  4:'Double click',
-  5:'Drag & Drop',
-  6:'Scroll',
-  7:'Seleksi area'
+  1:'Sorot',2:'Klik kiri',3:'Klik kanan',
+  4:'Double click',5:'Drag & Drop',
+  8:'Scroll',9:'Seleksi Area'
 };
-const stageColors=['','#e74c3c','#3498db','#27ae60','#9b59b6','#f39c12','#2c3e50','#c0392b'];
 let summary=[];
 
 function startTimer(){
@@ -76,58 +91,55 @@ function startTimer(){
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
     const t=((Date.now()-stageStart)/1000).toFixed(1);
-    timer.textContent=`⏱ ${t}s`;
-    timer.style.color = t<=stageLimit[stage]?'green':'red';
+    timerEl.textContent=`⏱ ${t}s`;
+    timerEl.style.color=t<=stageTimeLimit[stage]?'green':'red';
   },100);
 }
 function stopTimer(){
   clearInterval(timerInterval);
   const t=((Date.now()-stageStart)/1000).toFixed(1);
-  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageLimit[stage]});
+  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageTimeLimit[stage]});
 }
 
 // ===== UTIL =====
-function rand(min,max){return Math.random()*(max-min)+min}
+function randPos(w=170,h=60){
+  return {
+    x:Math.random()*(canvas.width-w-40)+20,
+    y:Math.random()*(canvas.height-h-40)+20,
+    w,h
+  };
+}
 function hit(e,o){
-  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
-         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
 
-// ===== OBJECT =====
-let target={}, dropZone={}, scrollVal=0;
-let dragging=false, dragOffset={x:0,y:0};
-
-// ===== SELEKSI AREA =====
-let boxes=[], selectStart=null, selectRect=null;
-function genBoxes(){
-  boxes=[];
+// ===== INIT SELEKSI =====
+function initSelectStage(){
+  selectBoxes=[];
   for(let i=0;i<8;i++){
-    boxes.push({
-      x:rand(50,canvas.width-120),
-      y:rand(50,canvas.height-100),
+    selectBoxes.push({
+      x:Math.random()*(canvas.width-100)+30,
+      y:Math.random()*(canvas.height-100)+30,
       w:70,h:50,selected:false
     });
   }
 }
 
 // ===== DRAW =====
+let target;
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(stage===7){
-    boxes.forEach(b=>{
-      ctx.fillStyle=b.selected?'#2ecc71':stageColors[stage];
+  // ===== STAGE SELEKSI =====
+  if(stage===9){
+    selectBoxes.forEach(b=>{
+      ctx.fillStyle=b.selected?'#2ecc71':'#c0392b';
       ctx.fillRect(b.x,b.y,b.w,b.h);
       ctx.strokeRect(b.x,b.y,b.w,b.h);
-      ctx.fillStyle='#fff';
-      ctx.font='bold 16px Arial';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.fillText('OBJ',b.x+b.w/2,b.y+b.h/2);
     });
 
     if(selectRect){
-      ctx.fillStyle='rgba(52,152,219,0.3)';
+      ctx.fillStyle='rgba(52,152,219,0.25)';
       ctx.strokeStyle='#2980b9';
       ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
       ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
@@ -135,23 +147,19 @@ function draw(){
     return;
   }
 
-  if(stage===5){
-    ctx.strokeStyle='green';
-    ctx.lineWidth=3;
-    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
-  }
-
+  // ===== STAGE LAIN (TIDAK DIUBAH) =====
   ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
 
   ctx.fillStyle='#fff';
-  ctx.font='bold 20px Arial';
+  ctx.font='bold 24px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
 
-  stageEl.textContent=stage;
-  currentTargetEl.textContent=currentTarget+1;
+  document.getElementById('stage').textContent=stage;
+  document.getElementById('currentTarget').textContent=currentTarget+1;
+  document.getElementById('targetCount').textContent=targetCount;
 }
 
 // ===== FLOW =====
@@ -164,92 +172,92 @@ function next(){
       stopTimer();
       stage++;
       currentTarget=0;
-      if(stage>7){showSummary();return;}
+      if(stage===6||stage===7)stage=8;
+      if(stage>9){showSummary();return;}
       startTimer();
     }
-    initStage();
+    if(stage===9) initSelectStage();
+    else target=randPos();
     isProcessing=false;
+    draw();
   },300);
 }
 
-// ===== INIT STAGE =====
-function initStage(){
-  if(stage===7){
-    genBoxes();
-  }else{
-    target={x:rand(50,canvas.width-200),y:rand(50,canvas.height-120),w:180,h:60};
-    dropZone={x:rand(50,canvas.width-220),y:rand(50,canvas.height-150),w:220,h:110};
-    scrollVal=0;
-  }
-  draw();
-}
-
 // ===== EVENTS =====
-canvas.addEventListener('mousemove',e=>{
-  if(stage===1 && hit(e,target)) next();
-  if(dragging){
-    target.x=e.offsetX-dragOffset.x;
-    target.y=e.offsetY-dragOffset.y;
-    draw();
+canvas.addEventListener('mousedown',e=>{
+  if(stage===9){
+    selectStart={x:e.offsetX,y:e.offsetY};
+    selectRect=null;
   }
-  if(stage===7 && selectStart){
+});
+canvas.addEventListener('mousemove',e=>{
+  if(stage===9&&selectStart){
     const x=Math.min(selectStart.x,e.offsetX);
     const y=Math.min(selectStart.y,e.offsetY);
-    selectRect={x,y,w:Math.abs(e.offsetX-selectStart.x),h:Math.abs(e.offsetY-selectStart.y)};
-    boxes.forEach(b=>b.selected=false);
-    boxes.forEach(b=>{
-      if(!(selectRect.x+selectRect.w<b.x||selectRect.x>b.x+b.w||
-           selectRect.y+selectRect.h<b.y||selectRect.y>b.y+b.h)){
-        b.selected=true;
-      }
+    const w=Math.abs(e.offsetX-selectStart.x);
+    const h=Math.abs(e.offsetY-selectStart.y);
+    selectRect={x,y,w,h};
+
+    selectBoxes.forEach(b=>{
+      b.selected=!(
+        b.x+b.w<x||
+        b.x>x+w||
+        b.y+b.h<y||
+        b.y>y+h
+      );
     });
     draw();
   }
 });
-canvas.addEventListener('mousedown',e=>{
-  if(stage===5 && hit(e,target)){
-    dragging=true;
-    dragOffset.x=e.offsetX-target.x;
-    dragOffset.y=e.offsetY-target.y;
-  }
-  if(stage===7) selectStart={x:e.offsetX,y:e.offsetY};
-});
 canvas.addEventListener('mouseup',()=>{
-  dragging=false;
-  if(stage===5){
-    if(target.x>dropZone.x&&target.x+target.w<dropZone.x+dropZone.w) next();
-  }
-  if(stage===7){
-    const c=boxes.filter(b=>b.selected).length;
-    selectStart=null; selectRect=null;
-    if(c>=3) next();
-    draw();
+  if(stage===9&&selectRect){
+    const count=selectBoxes.filter(b=>b.selected).length;
+    if(count>=3) next();
+    selectStart=null;
+    selectRect=null;
   }
 });
-canvas.addEventListener('click',e=>{ if(stage===2&&hit(e,target)) next(); });
-canvas.addEventListener('contextmenu',e=>{ e.preventDefault(); if(stage===3&&hit(e,target)) next(); });
-canvas.addEventListener('dblclick',e=>{ if(stage===4&&hit(e,target)) next(); });
-canvas.addEventListener('wheel',e=>{ if(stage===6){ scrollVal+=Math.abs(e.deltaY); if(scrollVal>600) next(); }});
+canvas.addEventListener('mousemove',e=>{
+  if(stage===1&&hit(e,target))next();
+});
+canvas.addEventListener('click',e=>{
+  if(stage===2&&hit(e,target))next();
+});
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(stage===3&&hit(e,target))next();
+});
+canvas.addEventListener('dblclick',e=>{
+  if(stage===4&&hit(e,target))next();
+});
+canvas.addEventListener('wheel',e=>{
+  if(stage===8){
+    scrollVal+=Math.abs(e.deltaY);
+    if(scrollVal>600)next();
+  }
+});
 
 // ===== SUMMARY =====
 function showSummary(){
   canvas.style.display='none';
-  info.style.display='none';
-  summaryDiv.style.display='block';
+  document.getElementById('info').style.display='none';
+  document.getElementById('summary').style.display='block';
+  const tbody=document.getElementById('summaryBody');
   summary.forEach(s=>{
-    summaryBody.innerHTML+=`
-      <tr>
-        <td>${s.stage}</td>
-        <td>${s.name}</td>
-        <td>${s.time}s</td>
-        <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>
-      </tr>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${s.stage}</td>
+      <td>${s.name}</td>
+      <td>${s.time}s</td>
+      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
+    tbody.appendChild(tr);
   });
 }
 
 // INIT
+target=randPos();
 startTimer();
-initStage();
+draw();
 </script>
 
 </body>
