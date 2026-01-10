@@ -67,6 +67,19 @@ let selectStart=null, scrollVal=0;
 
 let target, dropZone;
 
+// ===== WARNA PER STAGE =====
+const stageColors = {
+  1:'#e74c3c',
+  2:'#3498db',
+  3:'#27ae60',
+  4:'#9b59b6',
+  5:'#f39c12',
+  6:'#16a085',
+  7:'#d35400',
+  8:'#2c3e50',
+  9:'#c0392b'
+};
+
 // ===== TIMER =====
 let stageStart=Date.now(), timerInterval;
 const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,6:40,7:50,8:20,9:45};
@@ -93,7 +106,7 @@ function stopTimer(){
 }
 
 // ===== UTIL =====
-function randPos(w=160,h=50){
+function randPos(w=170,h=60){
   return {
     x:Math.random()*(canvas.width-w-40)+20,
     y:Math.random()*(canvas.height-h-40)+20,
@@ -107,7 +120,7 @@ function hit(e,o){
 }
 function randomizeAll(){
   target=randPos();
-  dropZone=randPos(200,100);
+  dropZone=randPos(220,110);
 }
 
 // ===== DRAW =====
@@ -118,23 +131,23 @@ function draw(){
     ctx.strokeStyle='green';
     ctx.lineWidth=3;
     ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
-    ctx.fillStyle='#999';
-    ctx.fillText('DROP',
-      dropZone.x+dropZone.w/2,
-      dropZone.y+dropZone.h/2);
   }
 
   if(dragging){
-    ctx.globalAlpha=0.7;
+    ctx.globalAlpha=0.75;
     ctx.shadowColor='rgba(0,0,0,0.4)';
     ctx.shadowBlur=15;
   }
 
-  ctx.fillStyle='#3498db';
+  // BLOK WARNA SESUAI STAGE
+  ctx.fillStyle = stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
   ctx.shadowBlur=0;
   ctx.globalAlpha=1;
 
+  // FONT PROPORSIONAL (LEBIH BESAR)
+  const fontSize = Math.min(target.w, target.h) * 0.45;
+  ctx.font = `bold ${fontSize}px Arial`;
   ctx.fillStyle='#fff';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
@@ -169,9 +182,8 @@ function next(){
 canvas.addEventListener('mousemove',e=>{
   if(stage===1&&hit(e,target))next();
   if(dragging){
-    const r=canvas.getBoundingClientRect();
-    target.x=e.clientX-r.left-dragOffset.x;
-    target.y=e.clientY-r.top-dragOffset.y;
+    target.x=e.offsetX-dragOffset.x;
+    target.y=e.offsetY-dragOffset.y;
     draw();
   }
 });
@@ -181,28 +193,18 @@ canvas.addEventListener('mousedown',e=>{
     dragOffset.x=e.offsetX-target.x;
     dragOffset.y=e.offsetY-target.y;
   }
-  if(stage===9)selectStart={x:e.offsetX,y:e.offsetY};
 });
 canvas.addEventListener('mouseup',()=>{
-  if(!dragging)return;
   dragging=false;
-
+  if(stage===6) next();
   if(stage===5||stage===7){
     const ok=
       target.x>dropZone.x &&
       target.x+target.w<dropZone.x+dropZone.w &&
       target.y>dropZone.y &&
       target.y+target.h<dropZone.y+dropZone.h;
-
-    if(ok){
-      target.x=dropZone.x+(dropZone.w-target.w)/2;
-      target.y=dropZone.y+(dropZone.h-target.h)/2;
-      draw();
-      setTimeout(next,400);
-      return;
-    }
+    if(ok) next();
   }
-  if(stage===6) next();
 });
 canvas.addEventListener('click',e=>{
   if(stage===2&&hit(e,target))next();
