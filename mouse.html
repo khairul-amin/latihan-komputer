@@ -2,14 +2,33 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Latihan Mouse + Timer</title>
+
 <style>
-body{margin:0;font-family:Arial}
-#info{background:#f8f9fa;padding:10px;font-size:18px;
-display:flex;justify-content:space-between;border-bottom:1px solid #ccc}
-#timer{font-weight:bold}
-#fail{color:red;font-weight:bold}
-canvas{display:block;background:#f0f0f0}
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+#info {
+  background: #f8f9fa;
+  padding: 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+#timer { font-weight: bold; }
+#fail { color:red; font-weight:bold }
+canvas { flex-grow: 1; background: #f0f0f0; }
+#summary { display:none; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #ccc; padding:8px; text-align:center; }
+.good{color:green;font-weight:bold}
+.bad{color:red;font-weight:bold}
 </style>
 </head>
 
@@ -17,112 +36,218 @@ canvas{display:block;background:#f0f0f0}
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="cur">1</span>/5</div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">5</span></div>
   <div id="timer">⏱ 0.0s</div>
   <div id="fail" style="display:none">❌ Gagal: 0</div>
 </div>
 
-<canvas id="c"></canvas>
+<canvas id="gameCanvas"></canvas>
+
+<div id="summary">
+  <h2>📊 Rekap Latihan Mouse</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="summaryBody"></tbody>
+  </table>
+</div>
 
 <script>
-const c=document.getElementById('c'),ctx=c.getContext('2d');
-c.width=innerWidth;
-c.height=innerHeight-info.offsetHeight;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const timerEl = document.getElementById('timer');
+const failEl = document.getElementById('fail');
 
-let stage=2,targetCount=2,cur=0;
-let target,dropZone;
-let dragging=false,off={x:0,y:0};
-let fail=0;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-// ===== SELEKSI =====
-let boxes=[],selectStart=null,selectRect=null;
+let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
+let dragging=false, dragOffset={x:0,y:0};
+let scrollVal=0;
+let target, dropZone;
+let failCount=0;
+
+// ===== STAGE 7 (SELEKSI AREA) =====
+const BOX_COUNT = 8;
+let boxes = [];
+let selectStart=null;
+let selectRect=null;
+
+// ===== WARNA =====
+const stageColors={
+  1:'#e74c3c',2:'#3498db',3:'#27ae60',
+  4:'#9b59b6',5:'#f39c12',6:'#2c3e50',7:'#34495e'
+};
 
 // ===== TIMER =====
-let start=Date.now(),timer=setInterval(tick,100);
-function tick(){
-  let t=((Date.now()-start)/1000).toFixed(1);
-  timerEl.textContent='⏱ '+t+'s';
+let stageStart=Date.now(),timerInterval;
+const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,6:20,7:45};
+const stageNames={
+  1:'Sorot Kesini',
+  2:'Klik kiri',
+  3:'Klik kanan',
+  4:'Double click',
+  5:'Drag & Drop',
+  6:'Scroll',
+  7:'Seleksi area'
+};
+let summary=[];
+
+function startTimer(){
+  stageStart=Date.now();
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const t=((Date.now()-stageStart)/1000).toFixed(1);
+    timerEl.textContent=`⏱ ${t}s`;
+    timerEl.style.color=t<=stageTimeLimit[stage]?'green':'red';
+  },100);
 }
-function next(){
-  cur++;
-  if(cur>=targetCount){alert('SELESAI');return;}
-  randomize();
-  draw();
+function stopTimer(){
+  clearInterval(timerInterval);
+  const t=((Date.now()-stageStart)/1000).toFixed(1);
+  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageTimeLimit[stage]});
 }
 
 // ===== UTIL =====
-function rand(w=170,h=60){
-  return {x:Math.random()*(c.width-w-40)+20,
-          y:Math.random()*(c.height-h-40)+20,w,h};
+function randPos(w=170,h=60){
+  return {
+    x:Math.random()*(canvas.width-w-40)+20,
+    y:Math.random()*(canvas.height-h-40)+20,
+    w,h
+  };
 }
 function hit(e,o){
   return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
          e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
-function intersect(a,b){
-  return !(a.x+a.w<b.x||a.x>b.x+b.w||a.y+a.h<b.y||a.y>b.y+b.h);
+function rectIntersect(a,b){
+  return !(
+    a.x+a.w < b.x ||
+    a.x > b.x+b.w ||
+    a.y+a.h < b.y ||
+    a.y > b.y+b.h
+  );
 }
 
-// ===== INIT =====
-function randomize(){
-  target=rand();
-  dropZone=rand(220,110);
-  fail=0;failEl.style.display='block';
+// ===== RANDOM =====
+function randomizeAll(){
+  target=randPos();
+  if(stage===5){
+    dropZone=randPos(220,110);
+    failCount=0;
+    failEl.style.display='block';
+    failEl.textContent='❌ Gagal: 0';
+  }else{
+    dropZone=null;
+    failEl.style.display='none';
+  }
+
+  if(stage===7){
+    boxes=[];
+    for(let i=0;i<BOX_COUNT;i++){
+      boxes.push({
+        x:Math.random()*(canvas.width-120)+40,
+        y:Math.random()*(canvas.height-120)+40,
+        w:70,h:50,selected:false
+      });
+    }
+  }
 }
 
 // ===== DRAW =====
 function draw(){
-  ctx.clearRect(0,0,c.width,c.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(stage===5){
-    ctx.strokeStyle='green';
-    ctx.lineWidth=3;
-    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
-    ctx.fillStyle='green';
-    ctx.font='bold 18px Arial';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText('DROP',
-      dropZone.x+dropZone.w/2,
-      dropZone.y+dropZone.h/2);
-  }
-
+  // Stage 7
   if(stage===7){
     boxes.forEach(b=>{
-      ctx.fillStyle=b.sel?'#2ecc71':'#3498db';
+      ctx.fillStyle=b.selected?'#2ecc71':'#3498db';
       ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.strokeStyle='#333';
       ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+      ctx.fillStyle='#fff';
+      ctx.font='bold 16px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText('OBJ',b.x+b.w/2,b.y+b.h/2);
     });
+
     if(selectRect){
-      ctx.fillStyle='rgba(52,152,219,.25)';
+      ctx.fillStyle='rgba(52,152,219,0.25)';
+      ctx.strokeStyle='#2980b9';
+      ctx.lineWidth=2;
       ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
       ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
     }
     return;
   }
 
-  ctx.fillStyle='#f39c12';
+  // Stage lain
+  if(stage===5 && dropZone){
+    ctx.strokeStyle='green';
+    ctx.lineWidth=3;
+    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+    ctx.fillStyle='green';
+    ctx.font='bold 20px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('DROP DI SINI',
+      dropZone.x+dropZone.w/2,
+      dropZone.y+dropZone.h/2);
+  }
+
+  ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
+
+  ctx.fillStyle='#fff';
+  ctx.font='bold 22px Arial';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(stageNames[stage],
+    target.x+target.w/2,
+    target.y+target.h/2);
+}
+
+// ===== FLOW =====
+function next(){
+  if(isProcessing)return;
+  isProcessing=true;
+  setTimeout(()=>{
+    currentTarget++;
+    if(currentTarget>=targetCount){
+      stopTimer();stage++;currentTarget=0;
+      if(stage>7){showSummary();return;}
+      startTimer();
+    }
+    randomizeAll();
+    isProcessing=false;
+    draw();
+  },300);
 }
 
 // ===== EVENTS =====
-c.onmousedown=e=>{
-  if(stage===5 && hit(e,target)){
+canvas.addEventListener('mousedown',e=>{
+  if(stage===5&&hit(e,target)){
     dragging=true;
-    off.x=e.offsetX-target.x;
-    off.y=e.offsetY-target.y;
+    dragOffset={x:e.offsetX-target.x,y:e.offsetY-target.y};
   }
 
   if(stage===7){
     selectStart={x:e.offsetX,y:e.offsetY};
     selectRect=null;
   }
-};
+});
 
-c.onmousemove=e=>{
-  if(stage===5 && dragging){
-    target.x=e.offsetX-off.x;
-    target.y=e.offsetY-off.y;
+canvas.addEventListener('mousemove',e=>{
+  if(stage===1&&hit(e,target))next();
+
+  if(dragging){
+    target.x=e.offsetX-dragOffset.x;
+    target.y=e.offsetY-dragOffset.y;
     draw();
   }
 
@@ -132,33 +257,67 @@ c.onmousemove=e=>{
     const w=Math.abs(e.offsetX-selectStart.x);
     const h=Math.abs(e.offsetY-selectStart.y);
     selectRect={x,y,w,h};
-    boxes.forEach(b=>b.sel=intersect(selectRect,b));
+
+    boxes.forEach(b=>{
+      b.selected=rectIntersect(selectRect,b);
+    });
     draw();
   }
-};
+});
 
-c.onmouseup=e=>{
-  if(stage===5 && dragging){
-    dragging=false;
-    const ok=
-      target.x>dropZone.x &&
-      target.x+target.w<dropZone.x+dropZone.w &&
-      target.y>dropZone.y &&
-      target.y+target.h<dropZone.y+dropZone.h;
-
-    ok?next():(fail++,failEl.textContent='❌ Gagal: '+fail);
-  }
+canvas.addEventListener('mouseup',()=>{
+  dragging=false;
 
   if(stage===7 && selectRect){
-    if(boxes.filter(b=>b.sel).length>=3)next();
+    const count=boxes.filter(b=>b.selected).length;
+    if(count>=3){
+      next();
+    }else{
+      boxes.forEach(b=>b.selected=false);
+    }
     selectStart=null;
     selectRect=null;
     draw();
   }
-};
+});
 
-// ===== START =====
-randomize();
+canvas.addEventListener('click',e=>{
+  if(stage===2&&hit(e,target))next();
+});
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(stage===3&&hit(e,target))next();
+});
+canvas.addEventListener('dblclick',e=>{
+  if(stage===4&&hit(e,target))next();
+});
+canvas.addEventListener('wheel',e=>{
+  if(stage===6){
+    scrollVal+=Math.abs(e.deltaY);
+    if(scrollVal>600)next();
+  }
+});
+
+// ===== SUMMARY =====
+function showSummary(){
+  canvas.style.display='none';
+  document.getElementById('info').style.display='none';
+  document.getElementById('summary').style.display='block';
+  const tbody=document.getElementById('summaryBody');
+  summary.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${s.stage}</td>
+      <td>${s.name}</td>
+      <td>${s.time}s</td>
+      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// INIT
+randomizeAll();
+startTimer();
 draw();
 </script>
 
