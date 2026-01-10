@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latihan Mouse + Timer</title>
+<title>Latihan Seleksi Area (Klik + Drag)</title>
 
 <style>
 body {
   margin: 0;
-  display: flex;
-  flex-direction: column;
   font-family: Arial, sans-serif;
 }
 #info {
@@ -17,232 +14,135 @@ body {
   padding: 10px;
   font-size: 18px;
   border-bottom: 1px solid #ccc;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
 }
-#timer { font-weight: bold; }
-canvas { flex-grow: 1; background: #f0f0f0; }
-#summary { display:none; padding:20px; }
-table { width:100%; border-collapse:collapse; }
-td,th { border:1px solid #ccc; padding:8px; text-align:center; }
-.good{color:green;font-weight:bold}
-.bad{color:red;font-weight:bold}
+canvas {
+  display: block;
+  background: #f0f0f0;
+}
 </style>
 </head>
 
 <body>
 
 <div id="info">
-  <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
-  <div id="timer">⏱ 0.0s</div>
+  🖱️ Latihan Seleksi Area — Blok minimal <b>3 kotak</b>
 </div>
 
-<canvas id="gameCanvas"></canvas>
-
-<div id="summary">
-  <h2>📊 Rekap Latihan Mouse</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="summaryBody"></tbody>
-  </table>
-</div>
+<canvas id="canvas"></canvas>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const timerEl = document.getElementById('timer');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=30,currentTarget=0,isProcessing=false;
-let dragging=false, dragOffset={x:0,y:0};
-let selectStart=null, scrollVal=0;
+// ===== DATA =====
+const BOX_COUNT = 8;
+const boxes = [];
+let selectStart = null;
+let selectRect = null;
 
-let target, dropZone;
-
-// ===== WARNA PER STAGE =====
-const stageColors = {
-  1:'#e74c3c',
-  2:'#3498db',
-  3:'#27ae60',
-  4:'#9b59b6',
-  5:'#f39c12',
-  6:'#16a085',
-  7:'#d35400',
-  8:'#2c3e50',
-  9:'#c0392b'
-};
-
-// ===== TIMER =====
-let stageStart=Date.now(), timerInterval;
-const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,6:40,7:50,8:20,9:45};
-const stageNames={
-  1:'Sorot Kesini',2:'Klik kiri',3:'Klik kanan',4:'Double click',
-  5:'Drag & Drop',6:'Pindahkan kotak',
-  7:'Susun objek',8:'Scroll',9:'Seleksi area'
-};
-let summary=[];
-
-function startTimer(){
-  stageStart=Date.now();
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    const t=((Date.now()-stageStart)/1000).toFixed(1);
-    timerEl.textContent=`⏱ ${t}s`;
-    timerEl.style.color=t<=stageTimeLimit[stage]?'green':'red';
-  },100);
-}
-function stopTimer(){
-  clearInterval(timerInterval);
-  const t=((Date.now()-stageStart)/1000).toFixed(1);
-  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageTimeLimit[stage]});
-}
-
-// ===== UTIL =====
-function randPos(w=170,h=60){
-  return {
-    x:Math.random()*(canvas.width-w-40)+20,
-    y:Math.random()*(canvas.height-h-40)+20,
-    w,h
-  };
-}
-function hit(e,o){
-  const r=canvas.getBoundingClientRect();
-  const x=e.clientX-r.left, y=e.clientY-r.top;
-  return x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h;
-}
-function randomizeAll(){
-  target=randPos();
-  dropZone=randPos(220,110);
+// ===== INIT BOX =====
+for(let i=0;i<BOX_COUNT;i++){
+  boxes.push({
+    x: Math.random() * (canvas.width - 100) + 50,
+    y: Math.random() * (canvas.height - 100) + 50,
+    w: 70,
+    h: 50,
+    selected: false
+  });
 }
 
 // ===== DRAW =====
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(stage===5||stage===7){
-    ctx.strokeStyle='green';
-    ctx.lineWidth=3;
-    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+  // draw boxes
+  boxes.forEach(b=>{
+    ctx.fillStyle = b.selected ? '#2ecc71' : '#3498db';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+
+    ctx.strokeStyle = '#333';
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+    ctx.fillStyle='#fff';
+    ctx.font='bold 16px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('OBJ',
+      b.x+b.w/2,
+      b.y+b.h/2
+    );
+  });
+
+  // draw selection area
+  if(selectRect){
+    ctx.fillStyle = 'rgba(52,152,219,0.25)';
+    ctx.strokeStyle = '#2980b9';
+    ctx.lineWidth = 2;
+    ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+    ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
   }
-
-  if(dragging){
-    ctx.globalAlpha=0.75;
-    ctx.shadowColor='rgba(0,0,0,0.4)';
-    ctx.shadowBlur=15;
-  }
-
-  // BLOK WARNA SESUAI STAGE
-  ctx.fillStyle = stageColors[stage];
-  ctx.fillRect(target.x,target.y,target.w,target.h);
-  ctx.shadowBlur=0;
-  ctx.globalAlpha=1;
-
-  // FONT PROPORSIONAL (LEBIH BESAR)
-  const fontSize = Math.min(target.w, target.h) * 0.45;
-  ctx.font = `bold ${fontSize}px Arial`;
-  ctx.fillStyle='#fff';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.fillText(stageNames[stage],
-    target.x+target.w/2,
-    target.y+target.h/2);
-
-  document.getElementById('stage').textContent=stage;
-  document.getElementById('currentTarget').textContent=currentTarget+1;
-  document.getElementById('targetCount').textContent=targetCount;
 }
 
-// ===== FLOW =====
-function next(){
-  if(isProcessing)return;
-  isProcessing=true;
-  setTimeout(()=>{
-    currentTarget++;
-    if(currentTarget>=targetCount){
-      stopTimer(); stage++; currentTarget=0;
-      if(stage>9){showSummary();return;}
-      startTimer();
-    }
-    randomizeAll();
-    scrollVal=0;
-    isProcessing=false;
-    draw();
-  },300);
+// ===== UTIL =====
+function rectIntersect(a,b){
+  return !(
+    a.x+a.w < b.x ||
+    a.x > b.x+b.w ||
+    a.y+a.h < b.y ||
+    a.y > b.y+b.h
+  );
 }
 
 // ===== EVENTS =====
-canvas.addEventListener('mousemove',e=>{
-  if(stage===1&&hit(e,target))next();
-  if(dragging){
-    target.x=e.offsetX-dragOffset.x;
-    target.y=e.offsetY-dragOffset.y;
-    draw();
-  }
-});
 canvas.addEventListener('mousedown',e=>{
-  if(stage>=5&&stage<=7&&hit(e,target)){
-    dragging=true;
-    dragOffset.x=e.offsetX-target.x;
-    dragOffset.y=e.offsetY-target.y;
-  }
-});
-canvas.addEventListener('mouseup',()=>{
-  dragging=false;
-  if(stage===6) next();
-  if(stage===5||stage===7){
-    const ok=
-      target.x>dropZone.x &&
-      target.x+target.w<dropZone.x+dropZone.w &&
-      target.y>dropZone.y &&
-      target.y+target.h<dropZone.y+dropZone.h;
-    if(ok) next();
-  }
-});
-canvas.addEventListener('click',e=>{
-  if(stage===2&&hit(e,target))next();
-});
-canvas.addEventListener('contextmenu',e=>{
-  e.preventDefault();
-  if(stage===3&&hit(e,target))next();
-});
-canvas.addEventListener('dblclick',e=>{
-  if(stage===4&&hit(e,target))next();
-});
-canvas.addEventListener('wheel',e=>{
-  if(stage===8){
-    scrollVal+=Math.abs(e.deltaY);
-    if(scrollVal>600)next();
-  }
+  selectStart = {x:e.offsetX,y:e.offsetY};
+  selectRect = null;
 });
 
-// ===== SUMMARY =====
-function showSummary(){
-  canvas.style.display='none';
-  document.getElementById('info').style.display='none';
-  document.getElementById('summary').style.display='block';
-  const tbody=document.getElementById('summaryBody');
-  summary.forEach(s=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${s.stage}</td>
-      <td>${s.name}</td>
-      <td>${s.time}s</td>
-      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
-    tbody.appendChild(tr);
+canvas.addEventListener('mousemove',e=>{
+  if(!selectStart) return;
+
+  const x = Math.min(selectStart.x,e.offsetX);
+  const y = Math.min(selectStart.y,e.offsetY);
+  const w = Math.abs(e.offsetX-selectStart.x);
+  const h = Math.abs(e.offsetY-selectStart.y);
+
+  selectRect = {x,y,w,h};
+
+  // reset selection
+  boxes.forEach(b=>b.selected=false);
+
+  // cek box masuk area
+  boxes.forEach(b=>{
+    if(rectIntersect(selectRect,b)){
+      b.selected = true;
+    }
   });
-}
+
+  draw();
+});
+
+canvas.addEventListener('mouseup',()=>{
+  if(!selectRect) return;
+
+  const selectedCount = boxes.filter(b=>b.selected).length;
+
+  if(selectedCount >= 3){
+    alert('✅ Berhasil! '+selectedCount+' objek terseleksi');
+  } else {
+    alert('❌ Minimal seleksi 3 objek');
+    boxes.forEach(b=>b.selected=false);
+  }
+
+  selectStart = null;
+  selectRect = null;
+  draw();
+});
 
 // INIT
-randomizeAll();
-startTimer();
 draw();
 </script>
 
