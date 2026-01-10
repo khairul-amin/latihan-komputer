@@ -68,7 +68,7 @@ const ctx=canvas.getContext('2d');
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight-document.getElementById('info').offsetHeight;
 
-let stage=1, targetCount=10, currentTarget=0;
+let stage=1, targetCount=30, currentTarget=0;
 let stageStart, timerInt;
 let summary=[];
 let totalSeconds=0;
@@ -89,4 +89,193 @@ const colors={1:'#e74c3c',2:'#3498db',3:'#27ae60',4:'#9b59b6',5:'#f39c12',6:'#2c
 // ===== OBJECTS =====
 let target, dropZone;
 let dragging=false, offset={x:0,y:0};
-let
+let scrollVal=0;
+
+// ===== SELEKSI AREA =====
+let selectStart=null, selectRect=null;
+let selectTargets=[];
+
+// ===== TIMER =====
+function startTimer(){
+  stageStart=Date.now();
+  clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    let t=((Date.now()-stageStart)/1000).toFixed(1);
+    timer.textContent=`⏱ ${t}s`;
+    timer.style.color=t<=limits[stage]?'green':'red';
+  },100);
+}
+function stopTimer(){
+  clearInterval(timerInt);
+  let t=((Date.now()-stageStart)/1000);
+  totalSeconds+=t;
+  summary.push({
+    stage,
+    name:stages[stage],
+    time:t.toFixed(1),
+    ok:t<=limits[stage]
+  });
+}
+
+// ===== UTIL =====
+function rand(w=160,h=60){
+  return{
+    x:Math.random()*(canvas.width-w-40)+20,
+    y:Math.random()*(canvas.height-h-40)+20,
+    w,h
+  };
+}
+function hit(e,o){
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
+         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+}
+
+// ===== DRAW =====
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // SELEKSI AREA STAGE
+  if(stage===7){
+    selectTargets.forEach(o=>{
+      ctx.fillStyle=o.isTarget?'#e74c3c':'#95a5a6';
+      ctx.fillRect(o.x,o.y,o.w,o.h);
+    });
+    if(selectRect){
+      ctx.fillStyle='rgba(52,152,219,0.2)';
+      ctx.strokeStyle='#2980b9';
+      ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+      ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+    }
+    return;
+  }
+
+  // DROP ZONE
+  if(stage===5){
+    ctx.strokeStyle='green';
+    ctx.lineWidth=3;
+    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+  }
+
+  // TARGET
+  ctx.fillStyle=colors[stage];
+  ctx.fillRect(target.x,target.y,target.w,target.h);
+
+  ctx.fillStyle='#fff';
+  ctx.font=`bold ${Math.min(target.w,target.h)*0.45}px Arial`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(stages[stage],target.x+target.w/2,target.y+target.h/2);
+
+  stageEl.textContent=stage;
+  currentTargetEl.textContent=currentTarget+1;
+}
+
+// ===== FLOW =====
+function next(){
+  currentTarget++;
+  if(currentTarget>=targetCount){
+    stopTimer();
+    stage++;
+    currentTarget=0;
+    if(!stages[stage]) return finish();
+    startTimer();
+  }
+  initStage();
+}
+
+function initStage(){
+  if(stage===7){
+    selectTargets=[];
+    for(let i=0;i<6;i++){
+      selectTargets.push({...rand(60,40),isTarget:false});
+    }
+    selectTargets[Math.floor(Math.random()*selectTargets.length)].isTarget=true;
+  }else{
+    target=rand();
+    dropZone=rand(200,100);
+    scrollVal=0;
+  }
+  draw();
+}
+
+// ===== EVENTS =====
+canvas.onmousemove=e=>{
+  if(stage===1 && hit(e,target)) next();
+  if(dragging){
+    target.x=e.offsetX-offset.x;
+    target.y=e.offsetY-offset.y;
+    draw();
+  }
+  if(selectStart){
+    selectRect={
+      x:Math.min(selectStart.x,e.offsetX),
+      y:Math.min(selectStart.y,e.offsetY),
+      w:Math.abs(e.offsetX-selectStart.x),
+      h:Math.abs(e.offsetY-selectStart.y)
+    };
+    draw();
+  }
+};
+canvas.onmousedown=e=>{
+  if(stage===5 && hit(e,target)){
+    dragging=true;
+    offset.x=e.offsetX-target.x;
+    offset.y=e.offsetY-target.y;
+  }
+  if(stage===7) selectStart={x:e.offsetX,y:e.offsetY};
+};
+canvas.onmouseup=e=>{
+  dragging=false;
+  if(stage===5){
+    let ok=target.x>dropZone.x&&target.x+target.w<dropZone.x+dropZone.w;
+    if(ok) next();
+  }
+  if(stage===7 && selectRect){
+    let ok=selectTargets.some(o=>
+      o.isTarget &&
+      o.x>=selectRect.x &&
+      o.x+o.w<=selectRect.x+selectRect.w &&
+      o.y>=selectRect.y &&
+      o.y+o.h<=selectRect.y+selectRect.h
+    );
+    selectStart=null;
+    selectRect=null;
+    if(ok) next();
+  }
+};
+canvas.onclick=e=>{if(stage===2&&hit(e,target))next()}
+canvas.oncontextmenu=e=>{e.preventDefault();if(stage===3&&hit(e,target))next()}
+canvas.ondblclick=e=>{if(stage===4&&hit(e,target))next()}
+canvas.onwheel=e=>{if(stage===6&&(scrollVal+=Math.abs(e.deltaY))>600)next()}
+
+// ===== FINISH =====
+function finish(){
+  canvas.style.display='none';
+  info.style.display='none';
+  summaryDiv.style.display='block';
+
+  let body=document.getElementById('summaryBody');
+  let score=100;
+
+  summary.forEach(s=>{
+    if(!s.ok) score-=10;
+    body.innerHTML+=`
+      <tr>
+        <td>${s.stage}</td>
+        <td>${s.name}</td>
+        <td>${s.time}s</td>
+        <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>
+      </tr>`;
+  });
+
+  totalTime.textContent=`⏱ Total Waktu: ${totalSeconds.toFixed(1)} detik`;
+  finalScore.textContent=`🏆 Nilai Akhir: ${Math.max(score,0)}`;
+}
+
+// INIT
+startTimer();
+initStage();
+</script>
+
+</body>
+</html>
