@@ -2,37 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latihan Menggunakan Mouse</title>
+<title>Latihan Mouse - Drag & Drop</title>
 <style>
-  body {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #info {
-    background-color: #f8f9fa;
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 18px;
-    border-bottom: 1px solid #ccc;
-  }
-
-  canvas {
-    display: block;
-    background-color: #f0f0f0;
-    flex-grow: 1;
-    cursor: pointer;
-  }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+#info {
+  background: #f8f9fa;
+  padding: 10px;
+}
+canvas {
+  display: block;
+  background: #f0f0f0;
+}
 </style>
 </head>
 <body>
 
 <div id="info">
-  <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">20</span></div>
-  <a href="/#!/login">KLIK INI UNTUK KEMBALI KE BERANDA</a>
+  Stage: <span id="stage">5</span>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -41,46 +30,32 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const infoHeight = document.getElementById("info").offsetHeight;
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - infoHeight;
+canvas.height = window.innerHeight - 50;
 
-const stageEl = document.getElementById("stage");
-const currentTargetEl = document.getElementById("currentTarget");
-const targetCountEl = document.getElementById("targetCount");
+let stage = 5;
 
-let stage = 1;
-let targetCount = 20;
-let currentTarget = 0;
-let isProcessing = false;
-
-// ===== TARGET OBJECT =====
-let target = {
-  x: 100,
-  y: 100,
-  w: 160,
-  h: 50
-};
+// ===== TARGET =====
+let target = { x: 100, y: 100, w: 160, h: 50 };
 
 // ===== DROP ZONE =====
-let dropZone = {
-  x: canvas.width - 260,
-  y: canvas.height / 2 - 60,
-  w: 200,
-  h: 120
-};
+let dropZone = { x: 400, y: 200, w: 220, h: 120 };
 
 // ===== DRAG STATE =====
 let dragging = false;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
+let offsetX = 0;
+let offsetY = 0;
 
-// ===== UTIL =====
-function randomPos() {
-  target.x = Math.random() * (canvas.width - 200) + 50;
-  target.y = Math.random() * (canvas.height - 100) + 50;
+// ===== RANDOM SEMUA =====
+function randomizeAll() {
+  target.x = Math.random() * (canvas.width - 200);
+  target.y = Math.random() * (canvas.height - 150);
+
+  dropZone.x = Math.random() * (canvas.width - 300);
+  dropZone.y = Math.random() * (canvas.height - 200);
 }
 
+// ===== HIT TEST =====
 function hit(e, obj) {
   const r = canvas.getBoundingClientRect();
   const x = e.clientX - r.left;
@@ -91,137 +66,88 @@ function hit(e, obj) {
 
 // ===== DRAW =====
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // DROP ZONE
-  if (stage === 5) {
-    ctx.fillStyle = "#ddd";
-    ctx.fillRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
-    ctx.strokeStyle = "#999";
-    ctx.strokeRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
+  ctx.fillStyle = "#ddd";
+  ctx.fillRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
+  ctx.strokeRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
+  ctx.fillStyle = "#555";
+  ctx.textAlign = "center";
+  ctx.fillText("DROP DI SINI",
+    dropZone.x + dropZone.w/2,
+    dropZone.y + dropZone.h/2
+  );
 
-    ctx.fillStyle = "#555";
-    ctx.font = "16px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("DROP DI SINI",
-      dropZone.x + dropZone.w / 2,
-      dropZone.y + dropZone.h / 2);
-  }
-
-  // SHADOW SAAT DRAG
+  // SHADOW + TRANSPARAN
   if (dragging) {
+    ctx.globalAlpha = 0.7;
     ctx.shadowColor = "rgba(0,0,0,0.4)";
     ctx.shadowBlur = 15;
-    ctx.globalAlpha = 0.7;
   } else {
-    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
   }
 
   // TARGET
   ctx.fillStyle = "#007bff";
   ctx.fillRect(target.x, target.y, target.w, target.h);
-
   ctx.fillStyle = "#fff";
-  ctx.font = "18px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  let label = "Target";
-  if (stage === 1) label = "Sorot ini";
-  if (stage === 2) label = "Klik kiri";
-  if (stage === 3) label = "Klik kanan";
-  if (stage === 4) label = "Double Click";
-  if (stage === 5) label = "Drag ke kotak";
-
-  ctx.fillText(label, target.x + target.w / 2, target.y + target.h / 2);
+  ctx.fillText("Drag ke kotak",
+    target.x + target.w/2,
+    target.y + target.h/2
+  );
 
   ctx.globalAlpha = 1;
-
-  stageEl.textContent = stage;
-  currentTargetEl.textContent = currentTarget + 1;
-  targetCountEl.textContent = targetCount;
 }
 
-// ===== STAGE LOGIC =====
-
-// STAGE 1 – HOVER
-canvas.addEventListener("mousemove", e => {
-  if (stage === 1 && hit(e, target)) next();
-  if (dragging) {
-    const r = canvas.getBoundingClientRect();
-    target.x = e.clientX - r.left - dragOffsetX;
-    target.y = e.clientY - r.top - dragOffsetY;
-    draw();
-  }
-});
-
-// STAGE 2 – CLICK
-canvas.addEventListener("click", e => {
-  if (stage === 2 && hit(e, target)) next();
-});
-
-// STAGE 3 – RIGHT CLICK
-canvas.addEventListener("contextmenu", e => {
-  e.preventDefault();
-  if (stage === 3 && hit(e, target)) next();
-});
-
-// STAGE 4 – DOUBLE CLICK
-canvas.addEventListener("dblclick", e => {
-  if (stage === 4 && hit(e, target)) next();
-});
-
-// ===== DRAG & DROP =====
+// ===== EVENTS =====
 canvas.addEventListener("mousedown", e => {
-  if (stage === 5 && hit(e, target)) {
+  if (hit(e, target)) {
     dragging = true;
     const r = canvas.getBoundingClientRect();
-    dragOffsetX = (e.clientX - r.left) - target.x;
-    dragOffsetY = (e.clientY - r.top) - target.y;
+    offsetX = (e.clientX - r.left) - target.x;
+    offsetY = (e.clientY - r.top) - target.y;
   }
+});
+
+canvas.addEventListener("mousemove", e => {
+  if (!dragging) return;
+  const r = canvas.getBoundingClientRect();
+  target.x = e.clientX - r.left - offsetX;
+  target.y = e.clientY - r.top - offsetY;
+  draw();
 });
 
 canvas.addEventListener("mouseup", () => {
-  if (dragging) {
-    dragging = false;
+  if (!dragging) return;
+  dragging = false;
 
-    // SNAP KE DROP ZONE
-    if (
-      target.x > dropZone.x &&
-      target.x + target.w < dropZone.x + dropZone.w &&
-      target.y > dropZone.y &&
-      target.y + target.h < dropZone.y + dropZone.h
-    ) {
-      target.x = dropZone.x + (dropZone.w - target.w) / 2;
-      target.y = dropZone.y + (dropZone.h - target.h) / 2;
-      next();
-    }
+  // ===== CEK BERHASIL =====
+  const success =
+    target.x > dropZone.x &&
+    target.x + target.w < dropZone.x + dropZone.w &&
+    target.y > dropZone.y &&
+    target.y + target.h < dropZone.y + dropZone.h;
+
+  if (success) {
+    // SNAP KE TENGAH
+    target.x = dropZone.x + (dropZone.w - target.w) / 2;
+    target.y = dropZone.y + (dropZone.h - target.h) / 2;
+    draw();
+
+    // TUNGGU SEBENTAR → PINDAH SEMUA
+    setTimeout(() => {
+      randomizeAll();
+      draw();
+    }, 500);
   }
+
+  draw();
 });
 
-// ===== NEXT TARGET =====
-function next() {
-  if (isProcessing) return;
-  isProcessing = true;
-
-  setTimeout(() => {
-    currentTarget++;
-    if (currentTarget >= targetCount) {
-      currentTarget = 0;
-      stage++;
-      if (stage > 5) {
-        alert("🎉 Semua latihan mouse selesai!");
-        stage = 1;
-      }
-    }
-    randomPos();
-    isProcessing = false;
-    draw();
-  }, 300);
-}
-
-randomPos();
+// INIT
+randomizeAll();
 draw();
 </script>
 
