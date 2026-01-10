@@ -65,6 +65,10 @@ let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
+// ===== DRAG & DROP (STAGE 5 SAJA) =====
+let dropZone=null;
+let snapping=false;
+
 // ===== SELEKSI AREA =====
 let selectStart=null, selectRect=null;
 let selectBoxes=[];
@@ -110,7 +114,8 @@ function randPos(w=170,h=60){
   };
 }
 function hit(e,o){
-  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
+         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
 
 // ===== INIT SELEKSI =====
@@ -125,6 +130,27 @@ function initSelectStage(){
   }
 }
 
+// ===== SNAP ANIMATION =====
+function snapToDrop(){
+  snapping=true;
+  const tx=dropZone.x+(dropZone.w-target.w)/2;
+  const ty=dropZone.y+(dropZone.h-target.h)/2;
+
+  function animate(){
+    target.x+= (tx-target.x)*0.25;
+    target.y+= (ty-target.y)*0.25;
+    draw();
+    if(Math.abs(target.x-tx)<1 && Math.abs(target.y-ty)<1){
+      target.x=tx; target.y=ty;
+      snapping=false;
+      next();
+      return;
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
 // ===== DRAW =====
 let target;
 function draw(){
@@ -137,7 +163,6 @@ function draw(){
       ctx.fillRect(b.x,b.y,b.w,b.h);
       ctx.strokeRect(b.x,b.y,b.w,b.h);
     });
-
     if(selectRect){
       ctx.fillStyle='rgba(52,152,219,0.25)';
       ctx.strokeStyle='#2980b9';
@@ -147,7 +172,14 @@ function draw(){
     return;
   }
 
-  // ===== STAGE LAIN (TIDAK DIUBAH) =====
+  // ===== DROP ZONE =====
+  if(stage===5 && dropZone){
+    ctx.strokeStyle='#27ae60';
+    ctx.lineWidth=3;
+    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+  }
+
+  // ===== TARGET =====
   ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
 
@@ -177,7 +209,10 @@ function next(){
       startTimer();
     }
     if(stage===9) initSelectStage();
-    else target=randPos();
+    else{
+      target=randPos();
+      if(stage===5) dropZone=randPos(220,80);
+    }
     isProcessing=false;
     draw();
   },300);
@@ -185,38 +220,58 @@ function next(){
 
 // ===== EVENTS =====
 canvas.addEventListener('mousedown',e=>{
+  if(stage===5 && hit(e,target)){
+    dragging=true;
+    dragOffset.x=e.offsetX-target.x;
+    dragOffset.y=e.offsetY-target.y;
+  }
   if(stage===9){
     selectStart={x:e.offsetX,y:e.offsetY};
     selectRect=null;
   }
 });
+
 canvas.addEventListener('mousemove',e=>{
-  if(stage===9&&selectStart){
+  if(stage===5 && dragging && !snapping){
+    target.x=e.offsetX-dragOffset.x;
+    target.y=e.offsetY-dragOffset.y;
+    draw();
+  }
+  if(stage===9 && selectStart){
     const x=Math.min(selectStart.x,e.offsetX);
     const y=Math.min(selectStart.y,e.offsetY);
     const w=Math.abs(e.offsetX-selectStart.x);
     const h=Math.abs(e.offsetY-selectStart.y);
     selectRect={x,y,w,h};
-
     selectBoxes.forEach(b=>{
       b.selected=!(
-        b.x+b.w<x||
-        b.x>x+w||
-        b.y+b.h<y||
-        b.y>y+h
+        b.x+b.w<x||b.x>x+w||
+        b.y+b.h<y||b.y>y+h
       );
     });
     draw();
   }
 });
+
 canvas.addEventListener('mouseup',()=>{
-  if(stage===9&&selectRect){
-    const count=selectBoxes.filter(b=>b.selected).length;
-    if(count>=3) next();
+  if(stage===5 && dragging){
+    dragging=false;
+    const cx=target.x+target.w/2;
+    const cy=target.y+target.h/2;
+    if(
+      cx>dropZone.x&&cx<dropZone.x+dropZone.w&&
+      cy>dropZone.y&&cy<dropZone.y+dropZone.h
+    ){
+      snapToDrop();
+    }
+  }
+  if(stage===9 && selectRect){
+    if(selectBoxes.filter(b=>b.selected).length>=3) next();
     selectStart=null;
     selectRect=null;
   }
 });
+
 canvas.addEventListener('mousemove',e=>{
   if(stage===1&&hit(e,target))next();
 });
