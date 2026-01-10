@@ -2,33 +2,28 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latihan Mouse Profesional</title>
+<title>Latihan Mouse + Timer</title>
 
 <style>
 body{
   margin:0;
+  display:flex;
+  flex-direction:column;
   font-family:Arial, sans-serif;
 }
 #info{
   background:#f8f9fa;
   padding:10px;
   font-size:18px;
+  border-bottom:1px solid #ccc;
   display:flex;
   justify-content:space-between;
-  border-bottom:1px solid #ccc;
 }
 #timer{font-weight:bold}
-canvas{background:#f0f0f0;display:block}
+canvas{flex-grow:1;background:#f0f0f0}
 #summary{display:none;padding:20px}
-button{padding:10px 16px;font-size:16px;cursor:pointer}
-
 .good{color:green;font-weight:bold}
 .bad{color:red;font-weight:bold}
-
-@media print{
-  button{display:none}
-}
 </style>
 </head>
 
@@ -36,46 +31,36 @@ button{padding:10px 16px;font-size:16px;cursor:pointer}
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / 30</div>
+  <div>Target: <span id="currentTarget">1</span> / 10</div>
   <div id="timer">⏱ 0.0s</div>
 </div>
 
-<canvas id="canvas"></canvas>
+<canvas id="gameCanvas"></canvas>
 
 <div id="summary">
   <h2>📊 Rekap Latihan Mouse</h2>
-  <table border="1" width="100%" cellspacing="0" cellpadding="8">
-    <thead>
-      <tr>
-        <th>Stage</th>
-        <th>Latihan</th>
-        <th>Waktu</th>
-        <th>Status</th>
-      </tr>
-    </thead>
+  <table border="1" width="100%">
+    <tr><th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th></tr>
     <tbody id="summaryBody"></tbody>
   </table>
-
-  <h3 id="totalTime"></h3>
-  <h2 id="finalScore"></h2>
-
-  <button onclick="window.print()">🖨 Cetak / Simpan PDF</button>
 </div>
 
 <script>
-const canvas=document.getElementById('canvas');
-const ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight-document.getElementById('info').offsetHeight;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 60;
 
-let stage=1, targetCount=10, currentTarget=0;
-let stageStart, timerInt;
-let summary=[];
-let totalSeconds=0;
+let stage = 1;
+let currentTarget = 0;
+const targetCount = 10;
+let isProcessing=false;
 
-// ===== STAGE CONFIG =====
-const stages={
-  1:'Sorot objek',
+// ===== TIMER =====
+let stageStart, timerInterval;
+const stageLimit={1:20,2:25,3:25,4:30,5:40,6:20,7:45};
+const stageNames={
+  1:'Hover',
   2:'Klik kiri',
   3:'Klik kanan',
   4:'Double click',
@@ -83,65 +68,66 @@ const stages={
   6:'Scroll',
   7:'Seleksi area'
 };
-const limits={1:20,2:25,3:25,4:30,5:40,6:20,7:45};
-const colors={1:'#e74c3c',2:'#3498db',3:'#27ae60',4:'#9b59b6',5:'#f39c12',6:'#2c3e50',7:'#c0392b'};
+const stageColors=['','#e74c3c','#3498db','#27ae60','#9b59b6','#f39c12','#2c3e50','#c0392b'];
+let summary=[];
 
-// ===== OBJECTS =====
-let target, dropZone;
-let dragging=false, offset={x:0,y:0};
-let scrollVal=0;
-
-// ===== SELEKSI AREA =====
-let selectStart=null, selectRect=null;
-let selectTargets=[];
-
-// ===== TIMER =====
 function startTimer(){
   stageStart=Date.now();
-  clearInterval(timerInt);
-  timerInt=setInterval(()=>{
-    let t=((Date.now()-stageStart)/1000).toFixed(1);
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const t=((Date.now()-stageStart)/1000).toFixed(1);
     timer.textContent=`⏱ ${t}s`;
-    timer.style.color=t<=limits[stage]?'green':'red';
+    timer.style.color = t<=stageLimit[stage]?'green':'red';
   },100);
 }
 function stopTimer(){
-  clearInterval(timerInt);
-  let t=((Date.now()-stageStart)/1000);
-  totalSeconds+=t;
-  summary.push({
-    stage,
-    name:stages[stage],
-    time:t.toFixed(1),
-    ok:t<=limits[stage]
-  });
+  clearInterval(timerInterval);
+  const t=((Date.now()-stageStart)/1000).toFixed(1);
+  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageLimit[stage]});
 }
 
 // ===== UTIL =====
-function rand(w=160,h=60){
-  return{
-    x:Math.random()*(canvas.width-w-40)+20,
-    y:Math.random()*(canvas.height-h-40)+20,
-    w,h
-  };
-}
+function rand(min,max){return Math.random()*(max-min)+min}
 function hit(e,o){
   return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
          e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+}
+
+// ===== OBJECT =====
+let target={}, dropZone={}, scrollVal=0;
+let dragging=false, dragOffset={x:0,y:0};
+
+// ===== SELEKSI AREA =====
+let boxes=[], selectStart=null, selectRect=null;
+function genBoxes(){
+  boxes=[];
+  for(let i=0;i<8;i++){
+    boxes.push({
+      x:rand(50,canvas.width-120),
+      y:rand(50,canvas.height-100),
+      w:70,h:50,selected:false
+    });
+  }
 }
 
 // ===== DRAW =====
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // SELEKSI AREA STAGE
   if(stage===7){
-    selectTargets.forEach(o=>{
-      ctx.fillStyle=o.isTarget?'#e74c3c':'#95a5a6';
-      ctx.fillRect(o.x,o.y,o.w,o.h);
+    boxes.forEach(b=>{
+      ctx.fillStyle=b.selected?'#2ecc71':stageColors[stage];
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.strokeRect(b.x,b.y,b.w,b.h);
+      ctx.fillStyle='#fff';
+      ctx.font='bold 16px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText('OBJ',b.x+b.w/2,b.y+b.h/2);
     });
+
     if(selectRect){
-      ctx.fillStyle='rgba(52,152,219,0.2)';
+      ctx.fillStyle='rgba(52,152,219,0.3)';
       ctx.strokeStyle='#2980b9';
       ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
       ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
@@ -149,22 +135,20 @@ function draw(){
     return;
   }
 
-  // DROP ZONE
   if(stage===5){
     ctx.strokeStyle='green';
     ctx.lineWidth=3;
     ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
   }
 
-  // TARGET
-  ctx.fillStyle=colors[stage];
+  ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
 
   ctx.fillStyle='#fff';
-  ctx.font=`bold ${Math.min(target.w,target.h)*0.45}px Arial`;
+  ctx.font='bold 20px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(stages[stage],target.x+target.w/2,target.y+target.h/2);
+  ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
 
   stageEl.textContent=stage;
   currentTargetEl.textContent=currentTarget+1;
@@ -172,94 +156,88 @@ function draw(){
 
 // ===== FLOW =====
 function next(){
-  currentTarget++;
-  if(currentTarget>=targetCount){
-    stopTimer();
-    stage++;
-    currentTarget=0;
-    if(!stages[stage]) return finish();
-    startTimer();
-  }
-  initStage();
+  if(isProcessing)return;
+  isProcessing=true;
+  setTimeout(()=>{
+    currentTarget++;
+    if(currentTarget>=targetCount){
+      stopTimer();
+      stage++;
+      currentTarget=0;
+      if(stage>7){showSummary();return;}
+      startTimer();
+    }
+    initStage();
+    isProcessing=false;
+  },0);
 }
 
+// ===== INIT STAGE =====
 function initStage(){
   if(stage===7){
-    selectTargets=[];
-    for(let i=0;i<6;i++){
-      selectTargets.push({...rand(60,40),isTarget:false});
-    }
-    selectTargets[Math.floor(Math.random()*selectTargets.length)].isTarget=true;
+    genBoxes();
   }else{
-    target=rand();
-    dropZone=rand(200,100);
+    target={x:rand(50,canvas.width-200),y:rand(50,canvas.height-120),w:180,h:60};
+    dropZone={x:rand(50,canvas.width-220),y:rand(50,canvas.height-150),w:220,h:110};
     scrollVal=0;
   }
   draw();
 }
 
 // ===== EVENTS =====
-canvas.onmousemove=e=>{
+canvas.addEventListener('mousemove',e=>{
   if(stage===1 && hit(e,target)) next();
   if(dragging){
-    target.x=e.offsetX-offset.x;
-    target.y=e.offsetY-offset.y;
+    target.x=e.offsetX-dragOffset.x;
+    target.y=e.offsetY-dragOffset.y;
     draw();
   }
-  if(selectStart){
-    selectRect={
-      x:Math.min(selectStart.x,e.offsetX),
-      y:Math.min(selectStart.y,e.offsetY),
-      w:Math.abs(e.offsetX-selectStart.x),
-      h:Math.abs(e.offsetY-selectStart.y)
-    };
+  if(stage===7 && selectStart){
+    const x=Math.min(selectStart.x,e.offsetX);
+    const y=Math.min(selectStart.y,e.offsetY);
+    selectRect={x,y,w:Math.abs(e.offsetX-selectStart.x),h:Math.abs(e.offsetY-selectStart.y)};
+    boxes.forEach(b=>b.selected=false);
+    boxes.forEach(b=>{
+      if(!(selectRect.x+selectRect.w<b.x||selectRect.x>b.x+b.w||
+           selectRect.y+selectRect.h<b.y||selectRect.y>b.y+b.h)){
+        b.selected=true;
+      }
+    });
     draw();
   }
-};
-canvas.onmousedown=e=>{
+});
+canvas.addEventListener('mousedown',e=>{
   if(stage===5 && hit(e,target)){
     dragging=true;
-    offset.x=e.offsetX-target.x;
-    offset.y=e.offsetY-target.y;
+    dragOffset.x=e.offsetX-target.x;
+    dragOffset.y=e.offsetY-target.y;
   }
   if(stage===7) selectStart={x:e.offsetX,y:e.offsetY};
-};
-canvas.onmouseup=e=>{
+});
+canvas.addEventListener('mouseup',()=>{
   dragging=false;
   if(stage===5){
-    let ok=target.x>dropZone.x&&target.x+target.w<dropZone.x+dropZone.w;
-    if(ok) next();
+    if(target.x>dropZone.x&&target.x+target.w<dropZone.x+dropZone.w) next();
   }
-  if(stage===7 && selectRect){
-    let ok=selectTargets.some(o=>
-      o.isTarget &&
-      o.x>=selectRect.x &&
-      o.x+o.w<=selectRect.x+selectRect.w &&
-      o.y>=selectRect.y &&
-      o.y+o.h<=selectRect.y+selectRect.h
-    );
-    selectStart=null;
-    selectRect=null;
-    if(ok) next();
+  if(stage===7){
+    const c=boxes.filter(b=>b.selected).length;
+    selectStart=null; selectRect=null;
+    if(c>=3) next();
+    draw();
   }
-};
-canvas.onclick=e=>{if(stage===2&&hit(e,target))next()}
-canvas.oncontextmenu=e=>{e.preventDefault();if(stage===3&&hit(e,target))next()}
-canvas.ondblclick=e=>{if(stage===4&&hit(e,target))next()}
-canvas.onwheel=e=>{if(stage===6&&(scrollVal+=Math.abs(e.deltaY))>600)next()}
+});
+canvas.addEventListener('click',e=>{ if(stage===2&&hit(e,target)) next(); });
+canvas.addEventListener('contextmenu',e=>{ e.preventDefault(); if(stage===3&&hit(e,target)) next(); });
+canvas.addEventListener('dblclick',e=>{ if(stage===4&&hit(e,target)) next(); });
+canvas.addEventListener('wheel',e=>{ if(stage===6){ scrollVal+=Math.abs(e.deltaY); if(scrollVal>600) next(); }});
 
-// ===== FINISH =====
-function finish(){
+// ===== SUMMARY =====
+function showSummary(){
   canvas.style.display='none';
   info.style.display='none';
   summaryDiv.style.display='block';
-
-  let body=document.getElementById('summaryBody');
-  let score=100;
-
   summary.forEach(s=>{
-    if(!s.ok) score-=10;
-    body.innerHTML+=`
+    summaryBody.innerHTML+=`
       <tr>
         <td>${s.stage}</td>
         <td>${s.name}</td>
@@ -267,9 +245,6 @@ function finish(){
         <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>
       </tr>`;
   });
-
-  totalTime.textContent=`⏱ Total Waktu: ${totalSeconds.toFixed(1)} detik`;
-  finalScore.textContent=`🏆 Nilai Akhir: ${Math.max(score,0)}`;
 }
 
 // INIT
