@@ -36,7 +36,7 @@ td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">5</span></div>
   <div id="timer">⏱ 0.0s</div>
   <div id="fail" style="display:none">❌ Gagal: 0</div>
 </div>
@@ -70,10 +70,16 @@ let scrollVal=0;
 let target, dropZone;
 let failCount=0;
 
+// ===== STAGE 7 (SELEKSI AREA) =====
+const BOX_COUNT = 8;
+let boxes = [];
+let selectStart=null;
+let selectRect=null;
+
 // ===== WARNA =====
 const stageColors={
-  1:'#e74c3c',2:'#3498db',3:'#27ae60',4:'#9b59b6',
-  5:'#f39c12',6:'#2c3e50',7:'#c0392b'
+  1:'#e74c3c',2:'#3498db',3:'#27ae60',
+  4:'#9b59b6',5:'#f39c12',6:'#2c3e50',7:'#34495e'
 };
 
 // ===== TIMER =====
@@ -114,10 +120,19 @@ function randPos(w=170,h=60){
   };
 }
 function hit(e,o){
-  const r=canvas.getBoundingClientRect();
-  const x=e.clientX-r.left, y=e.clientY-r.top;
-  return x>=o.x&&x<=o.x+o.w&&y>=o.y&&y<=o.y+o.h;
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
+         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
+function rectIntersect(a,b){
+  return !(
+    a.x+a.w < b.x ||
+    a.x > b.x+b.w ||
+    a.y+a.h < b.y ||
+    a.y > b.y+b.h
+  );
+}
+
+// ===== RANDOM =====
 function randomizeAll(){
   target=randPos();
   if(stage===5){
@@ -129,12 +144,49 @@ function randomizeAll(){
     dropZone=null;
     failEl.style.display='none';
   }
+
+  if(stage===7){
+    boxes=[];
+    for(let i=0;i<BOX_COUNT;i++){
+      boxes.push({
+        x:Math.random()*(canvas.width-120)+40,
+        y:Math.random()*(canvas.height-120)+40,
+        w:70,h:50,selected:false
+      });
+    }
+  }
 }
 
 // ===== DRAW =====
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // Stage 7
+  if(stage===7){
+    boxes.forEach(b=>{
+      ctx.fillStyle=b.selected?'#2ecc71':'#3498db';
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.strokeStyle='#333';
+      ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+      ctx.fillStyle='#fff';
+      ctx.font='bold 16px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText('OBJ',b.x+b.w/2,b.y+b.h/2);
+    });
+
+    if(selectRect){
+      ctx.fillStyle='rgba(52,152,219,0.25)';
+      ctx.strokeStyle='#2980b9';
+      ctx.lineWidth=2;
+      ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+      ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+    }
+    return;
+  }
+
+  // Stage lain
   if(stage===5 && dropZone){
     ctx.strokeStyle='green';
     ctx.lineWidth=3;
@@ -143,58 +195,21 @@ function draw(){
     ctx.font='bold 20px Arial';
     ctx.textAlign='center';
     ctx.textBaseline='middle';
-    ctx.fillText(
-      'DROP DI SINI',
+    ctx.fillText('DROP DI SINI',
       dropZone.x+dropZone.w/2,
-      dropZone.y+dropZone.h/2
-    );
-  }
-
-  if(dragging){
-    ctx.globalAlpha=0.75;
-    ctx.shadowColor='rgba(0,0,0,0.4)';
-    ctx.shadowBlur=15;
+      dropZone.y+dropZone.h/2);
   }
 
   ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
-  ctx.globalAlpha=1;
-  ctx.shadowBlur=0;
 
-  const fontSize=Math.min(target.w,target.h)*0.45;
-  ctx.font=`bold ${fontSize}px Arial`;
   ctx.fillStyle='#fff';
+  ctx.font='bold 22px Arial';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
-
-  document.getElementById('stage').textContent=stage;
-  document.getElementById('currentTarget').textContent=currentTarget+1;
-  document.getElementById('targetCount').textContent=targetCount;
-}
-
-// ===== SNAP ANIMATION =====
-function snapToCenter(cb){
-  const tx=dropZone.x+(dropZone.w-target.w)/2;
-  const ty=dropZone.y+(dropZone.h-target.h)/2;
-  const steps=15;
-  let i=0;
-  const sx=(tx-target.x)/steps;
-  const sy=(ty-target.y)/steps;
-
-  const anim=setInterval(()=>{
-    target.x+=sx;
-    target.y+=sy;
-    draw();
-    i++;
-    if(i>=steps){
-      clearInterval(anim);
-      target.x=tx;
-      target.y=ty;
-      draw();
-      setTimeout(cb,200);
-    }
-  },16);
+  ctx.fillText(stageNames[stage],
+    target.x+target.w/2,
+    target.y+target.h/2);
 }
 
 // ===== FLOW =====
@@ -215,40 +230,57 @@ function next(){
 }
 
 // ===== EVENTS =====
+canvas.addEventListener('mousedown',e=>{
+  if(stage===5&&hit(e,target)){
+    dragging=true;
+    dragOffset={x:e.offsetX-target.x,y:e.offsetY-target.y};
+  }
+
+  if(stage===7){
+    selectStart={x:e.offsetX,y:e.offsetY};
+    selectRect=null;
+  }
+});
+
 canvas.addEventListener('mousemove',e=>{
   if(stage===1&&hit(e,target))next();
+
   if(dragging){
     target.x=e.offsetX-dragOffset.x;
     target.y=e.offsetY-dragOffset.y;
     draw();
   }
-});
-canvas.addEventListener('mousedown',e=>{
-  if(stage===5&&hit(e,target)){
-    dragging=true;
-    dragOffset.x=e.offsetX-target.x;
-    dragOffset.y=e.offsetY-target.y;
+
+  if(stage===7 && selectStart){
+    const x=Math.min(selectStart.x,e.offsetX);
+    const y=Math.min(selectStart.y,e.offsetY);
+    const w=Math.abs(e.offsetX-selectStart.x);
+    const h=Math.abs(e.offsetY-selectStart.y);
+    selectRect={x,y,w,h};
+
+    boxes.forEach(b=>{
+      b.selected=rectIntersect(selectRect,b);
+    });
+    draw();
   }
 });
+
 canvas.addEventListener('mouseup',()=>{
-  if(!dragging)return;
   dragging=false;
 
-  if(stage===5){
-    const ok=
-      target.x>dropZone.x &&
-      target.x+target.w<dropZone.x+dropZone.w &&
-      target.y>dropZone.y &&
-      target.y+target.h<dropZone.y+dropZone.h;
-
-    if(ok){
-      snapToCenter(next);
+  if(stage===7 && selectRect){
+    const count=boxes.filter(b=>b.selected).length;
+    if(count>=3){
+      next();
     }else{
-      failCount++;
-      failEl.textContent='❌ Gagal: '+failCount;
+      boxes.forEach(b=>b.selected=false);
     }
+    selectStart=null;
+    selectRect=null;
+    draw();
   }
 });
+
 canvas.addEventListener('click',e=>{
   if(stage===2&&hit(e,target))next();
 });
