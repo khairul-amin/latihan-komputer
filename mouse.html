@@ -65,7 +65,7 @@ let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
-// ===== DRAG & DROP (STAGE 5 SAJA) =====
+// ===== DRAG & DROP =====
 let dropZone=null;
 let snapping=false;
 
@@ -73,11 +73,11 @@ let snapping=false;
 let selectStart=null, selectRect=null;
 let selectBoxes=[];
 
-// ===== WARNA PER STAGE =====
+// ===== WARNA =====
 const stageColors={
   1:'#e74c3c',2:'#3498db',3:'#27ae60',
   4:'#9b59b6',5:'#f39c12',
-  8:'#2c3e50',9:'#c0392b'
+  8:'#2c3e50',9:'#34495e'
 };
 
 // ===== TIMER =====
@@ -118,37 +118,51 @@ function hit(e,o){
          e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
 
-// ===== INIT SELEKSI =====
+// ===== INIT SELEKSI (GRID) =====
 function initSelectStage(){
   selectBoxes=[];
-  for(let i=0;i<8;i++){
-    selectBoxes.push({
-      x:Math.random()*(canvas.width-100)+30,
-      y:Math.random()*(canvas.height-100)+30,
-      w:70,h:50,selected:false
-    });
+  const cols=5;
+  const rows=4;
+  const size=80;
+  const gap=15;
+
+  const startX=(canvas.width-(cols*size+(cols-1)*gap))/2;
+  const startY=(canvas.height-(rows*size+(rows-1)*gap))/2;
+
+  let idx=0;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      selectBoxes.push({
+        x:startX+c*(size+gap),
+        y:startY+r*(size+gap),
+        w:size,
+        h:size,
+        label:String.fromCharCode(65+r)+(c+1),
+        selected:false
+      });
+      idx++;
+    }
   }
 }
 
-// ===== SNAP ANIMATION =====
+// ===== SNAP ANIM =====
 function snapToDrop(){
   snapping=true;
   const tx=dropZone.x+(dropZone.w-target.w)/2;
   const ty=dropZone.y+(dropZone.h-target.h)/2;
 
-  function animate(){
-    target.x+= (tx-target.x)*0.25;
-    target.y+= (ty-target.y)*0.25;
+  function anim(){
+    target.x+=(tx-target.x)*0.25;
+    target.y+=(ty-target.y)*0.25;
     draw();
-    if(Math.abs(target.x-tx)<1 && Math.abs(target.y-ty)<1){
-      target.x=tx; target.y=ty;
+    if(Math.abs(target.x-tx)<1&&Math.abs(target.y-ty)<1){
       snapping=false;
       next();
       return;
     }
-    requestAnimationFrame(animate);
+    requestAnimationFrame(anim);
   }
-  animate();
+  anim();
 }
 
 // ===== DRAW =====
@@ -156,13 +170,30 @@ let target;
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // ===== STAGE SELEKSI =====
+  // ===== STAGE 9: SELEKSI =====
   if(stage===9){
+    // Instruksi
+    ctx.fillStyle='#2c3e50';
+    ctx.font='bold 20px Arial';
+    ctx.textAlign='center';
+    ctx.fillText(
+      'Klik + drag untuk menyeleksi beberapa blok (min. 5 blok)',
+      canvas.width/2,40
+    );
+
     selectBoxes.forEach(b=>{
-      ctx.fillStyle=b.selected?'#2ecc71':'#c0392b';
+      ctx.fillStyle=b.selected?'#2ecc71':'#95a5a6';
       ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.strokeStyle='#333';
       ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+      ctx.fillStyle='#fff';
+      ctx.font='bold 18px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
     });
+
     if(selectRect){
       ctx.fillStyle='rgba(52,152,219,0.25)';
       ctx.strokeStyle='#2980b9';
@@ -211,7 +242,7 @@ function next(){
     if(stage===9) initSelectStage();
     else{
       target=randPos();
-      if(stage===5) dropZone=randPos(220,80);
+      if(stage===5) dropZone=randPos(240,90);
     }
     isProcessing=false;
     draw();
@@ -243,6 +274,7 @@ canvas.addEventListener('mousemove',e=>{
     const w=Math.abs(e.offsetX-selectStart.x);
     const h=Math.abs(e.offsetY-selectStart.y);
     selectRect={x,y,w,h};
+
     selectBoxes.forEach(b=>{
       b.selected=!(
         b.x+b.w<x||b.x>x+w||
@@ -266,7 +298,7 @@ canvas.addEventListener('mouseup',()=>{
     }
   }
   if(stage===9 && selectRect){
-    if(selectBoxes.filter(b=>b.selected).length>=3) next();
+    if(selectBoxes.filter(b=>b.selected).length>=5) next();
     selectStart=null;
     selectRect=null;
   }
