@@ -3,250 +3,225 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Latihan Mouse + Timer</title>
-
+<title>Latihan Menggunakan Mouse</title>
 <style>
-body {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  font-family: Arial, sans-serif;
-}
-#info {
-  background: #f8f9fa;
-  padding: 10px;
-  font-size: 18px;
-  border-bottom: 1px solid #ccc;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-#timer {
-  font-weight: bold;
-}
-canvas {
-  flex-grow: 1;
-  background: #f0f0f0;
-}
-#summary {
-  display: none;
-  padding: 20px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-td, th {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-}
-.good { color: green; font-weight: bold; }
-.bad { color: red; font-weight: bold; }
+  body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #info {
+    background-color: #f8f9fa;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  canvas {
+    display: block;
+    background-color: #f0f0f0;
+    flex-grow: 1;
+    cursor: pointer;
+  }
 </style>
 </head>
-
 <body>
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
-  <div id="timer">⏱ 0.0s</div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">20</span></div>
+  <a href="/#!/login">KLIK INI UNTUK KEMBALI KE BERANDA</a>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
-<div id="summary">
-  <h2>📊 Rekap Latihan Mouse</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Stage</th>
-        <th>Latihan</th>
-        <th>Waktu</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="summaryBody"></tbody>
-  </table>
-</div>
-
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const timerEl = document.getElementById('timer');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
+const infoHeight = document.getElementById("info").offsetHeight;
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
+canvas.height = window.innerHeight - infoHeight;
+
+const stageEl = document.getElementById("stage");
+const currentTargetEl = document.getElementById("currentTarget");
+const targetCountEl = document.getElementById("targetCount");
 
 let stage = 1;
-let targetCount = 30;
+let targetCount = 20;
 let currentTarget = 0;
 let isProcessing = false;
 
-let target = randPos();
-let dropZone = randPos(180,60);
+// ===== TARGET OBJECT =====
+let target = {
+  x: 100,
+  y: 100,
+  w: 160,
+  h: 50
+};
+
+// ===== DROP ZONE =====
+let dropZone = {
+  x: canvas.width - 260,
+  y: canvas.height / 2 - 60,
+  w: 200,
+  h: 120
+};
+
+// ===== DRAG STATE =====
 let dragging = false;
-let selectStart = null;
-let scrollVal = 0;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
-// TIMER
-let stageStart = Date.now();
-let timerInterval;
-
-const stageTimeLimit = {
-  1: 20, 2: 25, 3: 25, 4: 30,
-  5: 40, 6: 40, 7: 50, 8: 20, 9: 45
-};
-
-const stageNames = {
-  1:'Hover',2:'Klik kiri',3:'Klik kanan',4:'Double click',
-  5:'Drag & Drop',6:'Pindahkan kotak',
-  7:'Susun objek',8:'Scroll',9:'Seleksi area'
-};
-
-let summary = [];
-
-function startTimer() {
-  stageStart = Date.now();
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const t = ((Date.now()-stageStart)/1000).toFixed(1);
-    timerEl.textContent = `⏱ ${t}s`;
-    timerEl.style.color = t <= stageTimeLimit[stage] ? 'green' : 'red';
-  }, 100);
+// ===== UTIL =====
+function randomPos() {
+  target.x = Math.random() * (canvas.width - 200) + 50;
+  target.y = Math.random() * (canvas.height - 100) + 50;
 }
 
-function stopTimer() {
-  clearInterval(timerInterval);
-  const elapsed = ((Date.now()-stageStart)/1000).toFixed(1);
-  summary.push({
-    stage,
-    name: stageNames[stage],
-    time: elapsed,
-    ok: elapsed <= stageTimeLimit[stage]
-  });
-}
-
-function randPos(w=160,h=50){
-  return {
-    x: Math.random()*(canvas.width-w-20)+10,
-    y: Math.random()*(canvas.height-h-20)+10,
-    w,h
-  };
-}
-
-function hit(e,o){
+function hit(e, obj) {
   const r = canvas.getBoundingClientRect();
   const x = e.clientX - r.left;
   const y = e.clientY - r.top;
-  return x>=o.x && x<=o.x+o.w && y>=o.y && y<=o.y+o.h;
+  return x >= obj.x && x <= obj.x + obj.w &&
+         y >= obj.y && y <= obj.y + obj.h;
 }
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = '#3498db';
-  ctx.fillRect(target.x,target.y,target.w,target.h);
-  ctx.fillStyle='#fff';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.fillText(stageNames[stage], target.x+target.w/2, target.y+target.h/2);
+// ===== DRAW =====
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if(stage===5||stage===7){
-    ctx.strokeStyle='green';
-    ctx.lineWidth=3;
-    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+  // DROP ZONE
+  if (stage === 5) {
+    ctx.fillStyle = "#ddd";
+    ctx.fillRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
+    ctx.strokeStyle = "#999";
+    ctx.strokeRect(dropZone.x, dropZone.y, dropZone.w, dropZone.h);
+
+    ctx.fillStyle = "#555";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("DROP DI SINI",
+      dropZone.x + dropZone.w / 2,
+      dropZone.y + dropZone.h / 2);
   }
 
-  document.getElementById('stage').textContent = stage;
-  document.getElementById('currentTarget').textContent = currentTarget+1;
+  // SHADOW SAAT DRAG
+  if (dragging) {
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 15;
+    ctx.globalAlpha = 0.7;
+  } else {
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+
+  // TARGET
+  ctx.fillStyle = "#007bff";
+  ctx.fillRect(target.x, target.y, target.w, target.h);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "18px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  let label = "Target";
+  if (stage === 1) label = "Sorot ini";
+  if (stage === 2) label = "Klik kiri";
+  if (stage === 3) label = "Klik kanan";
+  if (stage === 4) label = "Double Click";
+  if (stage === 5) label = "Drag ke kotak";
+
+  ctx.fillText(label, target.x + target.w / 2, target.y + target.h / 2);
+
+  ctx.globalAlpha = 1;
+
+  stageEl.textContent = stage;
+  currentTargetEl.textContent = currentTarget + 1;
+  targetCountEl.textContent = targetCount;
 }
 
-function next(){
-  if(isProcessing) return;
-  isProcessing=true;
-  setTimeout(()=>{
-    currentTarget++;
-    if(currentTarget>=targetCount){
-      stopTimer();
-      stage++;
-      currentTarget=0;
-      if(stage>9){
-        showSummary();
-        return;
-      }
-      startTimer();
-    }
-    target=randPos();
-    dropZone=randPos(180,60);
-    scrollVal=0;
-    isProcessing=false;
+// ===== STAGE LOGIC =====
+
+// STAGE 1 – HOVER
+canvas.addEventListener("mousemove", e => {
+  if (stage === 1 && hit(e, target)) next();
+  if (dragging) {
+    const r = canvas.getBoundingClientRect();
+    target.x = e.clientX - r.left - dragOffsetX;
+    target.y = e.clientY - r.top - dragOffsetY;
     draw();
-  },200);
-}
-
-/* STAGE HANDLERS */
-canvas.addEventListener('mousemove',e=>{
-  if(stage===1 && hit(e,target)) next();
-  if(dragging){
-    target.x=e.offsetX-target.w/2;
-    target.y=e.offsetY-target.h/2;
   }
 });
 
-canvas.addEventListener('click',e=>{
-  if(stage===2 && hit(e,target)) next();
+// STAGE 2 – CLICK
+canvas.addEventListener("click", e => {
+  if (stage === 2 && hit(e, target)) next();
 });
 
-canvas.addEventListener('contextmenu',e=>{
+// STAGE 3 – RIGHT CLICK
+canvas.addEventListener("contextmenu", e => {
   e.preventDefault();
-  if(stage===3 && hit(e,target)) next();
+  if (stage === 3 && hit(e, target)) next();
 });
 
-canvas.addEventListener('dblclick',e=>{
-  if(stage===4 && hit(e,target)) next();
+// STAGE 4 – DOUBLE CLICK
+canvas.addEventListener("dblclick", e => {
+  if (stage === 4 && hit(e, target)) next();
 });
 
-canvas.addEventListener('mousedown',e=>{
-  if(stage>=5&&stage<=7 && hit(e,target)) dragging=true;
-  if(stage===9) selectStart={x:e.offsetX,y:e.offsetY};
-});
-
-canvas.addEventListener('mouseup',e=>{
-  if(stage===6 && dragging) next();
-  if(stage===5||stage===7){
-    if(target.x>dropZone.x && target.x<dropZone.x+dropZone.w) next();
-  }
-  if(stage===9 && selectStart && Math.abs(e.offsetX-selectStart.x)>80) next();
-  dragging=false;
-  selectStart=null;
-});
-
-canvas.addEventListener('wheel',e=>{
-  if(stage===8){
-    scrollVal+=Math.abs(e.deltaY);
-    if(scrollVal>600) next();
+// ===== DRAG & DROP =====
+canvas.addEventListener("mousedown", e => {
+  if (stage === 5 && hit(e, target)) {
+    dragging = true;
+    const r = canvas.getBoundingClientRect();
+    dragOffsetX = (e.clientX - r.left) - target.x;
+    dragOffsetY = (e.clientY - r.top) - target.y;
   }
 });
 
-function showSummary(){
-  canvas.style.display='none';
-  document.getElementById('info').style.display='none';
-  document.getElementById('summary').style.display='block';
+canvas.addEventListener("mouseup", () => {
+  if (dragging) {
+    dragging = false;
 
-  const tbody=document.getElementById('summaryBody');
-  summary.forEach(s=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${s.stage}</td>
-      <td>${s.name}</td>
-      <td>${s.time}s</td>
-      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
-    tbody.appendChild(tr);
-  });
+    // SNAP KE DROP ZONE
+    if (
+      target.x > dropZone.x &&
+      target.x + target.w < dropZone.x + dropZone.w &&
+      target.y > dropZone.y &&
+      target.y + target.h < dropZone.y + dropZone.h
+    ) {
+      target.x = dropZone.x + (dropZone.w - target.w) / 2;
+      target.y = dropZone.y + (dropZone.h - target.h) / 2;
+      next();
+    }
+  }
+});
+
+// ===== NEXT TARGET =====
+function next() {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  setTimeout(() => {
+    currentTarget++;
+    if (currentTarget >= targetCount) {
+      currentTarget = 0;
+      stage++;
+      if (stage > 5) {
+        alert("🎉 Semua latihan mouse selesai!");
+        stage = 1;
+      }
+    }
+    randomPos();
+    isProcessing = false;
+    draw();
+  }, 300);
 }
 
-startTimer();
+randomPos();
 draw();
 </script>
 
