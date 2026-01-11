@@ -117,30 +117,56 @@ function hit(e,o){
   return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
          e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
 }
+function randInt(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
 
-// ===== INIT SELEKSI (GRID) =====
-  // ===== TARGET SELEKSI BERTAHAP =====
-const selectTargets = [
-  { from:'A1',  to:'C3',  min:9 },
-  { from:'D4',  to:'F6',  min:9 },
-  { from:'A6',  to:'E9',  min:20 },
-  { from:'C2',  to:'H5',  min:18 },
-  { from:'B7',  to:'J10', min:24 }
-];
+function cellLabel(r,c){
+  return String.fromCharCode(65+r)+(c+1);
+}
+
+function generateSelectTargets(count){
+  const targets=[];
+
+  for(let i=0;i<count;i++){
+    const r1=randInt(0,7);
+    const c1=randInt(0,7);
+
+    const h=randInt(2,4);
+    const w=randInt(2,4);
+
+    const r2=Math.min(r1+h,9);
+    const c2=Math.min(c1+w,9);
+
+    const area=(r2-r1+1)*(c2-c1+1);
+
+    targets.push({
+      r1,c1,r2,c2,
+      from:cellLabel(r1,c1),
+      to:cellLabel(r2,c2),
+      min:Math.ceil(area*0.7)
+    });
+  }
+
+  return targets;
+}
+
 
 let selectStep = 0;
 
+let selectTargets=[];
+
 function initSelectStage(){
   selectBoxes=[];
-  selectStep = 0;
+  selectStep=0;
 
-  const cols=10;
-  const rows=10;
-  const size=48;
-  const gap=8;
+  selectTargets = generateSelectTargets(targetCount);
 
-  const gridW = cols*size+(cols-1)*gap;
-  const gridH = rows*size+(rows-1)*gap;
+  const cols=10, rows=10;
+  const size=48, gap=8;
+
+  const gridW=cols*size+(cols-1)*gap;
+  const gridH=rows*size+(rows-1)*gap;
 
   const startX=(canvas.width-gridW)/2;
   const startY=(canvas.height-gridH)/2;
@@ -150,14 +176,15 @@ function initSelectStage(){
       selectBoxes.push({
         x:startX+c*(size+gap),
         y:startY+r*(size+gap),
-        w:size,
-        h:size,
-        label:String.fromCharCode(65+r)+(c+1),
+        w:size,h:size,
+        row:r,col:c,
+        label:cellLabel(r,c),
         selected:false
       });
     }
   }
 }
+
 
 
 // ===== SNAP ANIM =====
@@ -338,17 +365,22 @@ canvas.addEventListener('mouseup',()=>{
     }
   }
 if(stage===9 && selectRect){
-  const t = selectTargets[selectStep];
-  const count = selectBoxes.filter(b=>b.selected).length;
+  const t=selectTargets[selectStep];
 
-  if(count >= t.min){
+  const count=selectBoxes.filter(b=>
+    b.selected &&
+    b.row>=t.r1 && b.row<=t.r2 &&
+    b.col>=t.c1 && b.col<=t.c2
+  ).length;
+
+  if(count>=t.min){
     selectStep++;
     currentTarget++;
 
     selectBoxes.forEach(b=>b.selected=false);
 
-    if(selectStep >= selectTargets.length){
-      next(); // lanjut stage berikutnya
+    if(selectStep>=selectTargets.length){
+      next();
     }
   }
 
@@ -356,6 +388,7 @@ if(stage===9 && selectRect){
   selectRect=null;
   draw();
 }
+
 
 });
 
