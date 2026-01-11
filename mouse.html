@@ -119,17 +119,32 @@ function hit(e,o){
 }
 
 // ===== INIT SELEKSI (GRID) =====
+  // ===== TARGET SELEKSI BERTAHAP =====
+const selectTargets = [
+  { from:'A1',  to:'C3',  min:9 },
+  { from:'D4',  to:'F6',  min:9 },
+  { from:'A6',  to:'E9',  min:20 },
+  { from:'C2',  to:'H5',  min:18 },
+  { from:'B7',  to:'J10', min:24 }
+];
+
+let selectStep = 0;
+
 function initSelectStage(){
   selectBoxes=[];
-  const cols=5;
-  const rows=4;
-  const size=80;
-  const gap=15;
+  selectStep = 0;
 
-  const startX=(canvas.width-(cols*size+(cols-1)*gap))/2;
-  const startY=(canvas.height-(rows*size+(rows-1)*gap))/2;
+  const cols=10;
+  const rows=10;
+  const size=48;
+  const gap=8;
 
-  let idx=0;
+  const gridW = cols*size+(cols-1)*gap;
+  const gridH = rows*size+(rows-1)*gap;
+
+  const startX=(canvas.width-gridW)/2;
+  const startY=(canvas.height-gridH)/2;
+
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       selectBoxes.push({
@@ -140,10 +155,10 @@ function initSelectStage(){
         label:String.fromCharCode(65+r)+(c+1),
         selected:false
       });
-      idx++;
     }
   }
 }
+
 
 // ===== SNAP ANIM =====
 function snapToDrop(){
@@ -172,34 +187,22 @@ function draw(){
 
   // ===== STAGE 9: SELEKSI =====
   if(stage===9){
-    // Instruksi
-    ctx.fillStyle='#2c3e50';
-    ctx.font='bold 20px Arial';
-    ctx.textAlign='center';
-    ctx.fillText(
-      'Klik + drag untuk menyeleksi beberapa blok (min. 5 blok)',
-      canvas.width/2,40
-    );
+const t = selectTargets[selectStep];
 
-    selectBoxes.forEach(b=>{
-      ctx.fillStyle=b.selected?'#2ecc71':'#95a5a6';
-      ctx.fillRect(b.x,b.y,b.w,b.h);
-      ctx.strokeStyle='#333';
-      ctx.strokeRect(b.x,b.y,b.w,b.h);
+ctx.fillStyle='#2c3e50';
+ctx.font='bold 20px Arial';
+ctx.textAlign='center';
+ctx.fillText(
+  `Seleksi dari ${t.from} ke ${t.to} (min. ${t.min} blok)`,
+  canvas.width/2,32
+);
 
-      ctx.fillStyle='#fff';
-      ctx.font='bold 18px Arial';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
-    });
+ctx.font='16px Arial';
+ctx.fillText(
+  'Klik + drag untuk memblok area secara presisi',
+  canvas.width/2,54
+);
 
-    if(selectRect){
-      ctx.fillStyle='rgba(52,152,219,0.25)';
-      ctx.strokeStyle='#2980b9';
-      ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
-      ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
-    }
     return;
   }
 
@@ -268,21 +271,27 @@ canvas.addEventListener('mousemove',e=>{
     target.y=e.offsetY-dragOffset.y;
     draw();
   }
-  if(stage===9 && selectStart){
-    const x=Math.min(selectStart.x,e.offsetX);
-    const y=Math.min(selectStart.y,e.offsetY);
-    const w=Math.abs(e.offsetX-selectStart.x);
-    const h=Math.abs(e.offsetY-selectStart.y);
-    selectRect={x,y,w,h};
+if(stage===9 && selectStart){
+  const x=Math.min(selectStart.x,e.offsetX);
+  const y=Math.min(selectStart.y,e.offsetY);
+  const w=Math.abs(e.offsetX-selectStart.x);
+  const h=Math.abs(e.offsetY-selectStart.y);
+  selectRect={x,y,w,h};
 
-    selectBoxes.forEach(b=>{
-      b.selected=!(
-        b.x+b.w<x||b.x>x+w||
-        b.y+b.h<y||b.y>y+h
-      );
-    });
-    draw();
-  }
+  selectBoxes.forEach(b=>{
+    const ox = Math.max(0,
+      Math.min(b.x+b.w,x+w)-Math.max(b.x,x)
+    );
+    const oy = Math.max(0,
+      Math.min(b.y+b.h,y+h)-Math.max(b.y,y)
+    );
+    const overlap = ox*oy;
+    b.selected = overlap/(b.w*b.h) >= 0.5;
+  });
+
+  draw();
+}
+
 });
 
 canvas.addEventListener('mouseup',()=>{
@@ -297,11 +306,26 @@ canvas.addEventListener('mouseup',()=>{
       snapToDrop();
     }
   }
-  if(stage===9 && selectRect){
-    if(selectBoxes.filter(b=>b.selected).length>=5) next();
-    selectStart=null;
-    selectRect=null;
+if(stage===9 && selectRect){
+  const t = selectTargets[selectStep];
+  const count = selectBoxes.filter(b=>b.selected).length;
+
+  if(count >= t.min){
+    selectStep++;
+    currentTarget++;
+
+    selectBoxes.forEach(b=>b.selected=false);
+
+    if(selectStep >= selectTargets.length){
+      next(); // lanjut stage berikutnya
+    }
   }
+
+  selectStart=null;
+  selectRect=null;
+  draw();
+}
+
 });
 
 canvas.addEventListener('mousemove',e=>{
