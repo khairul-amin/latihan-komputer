@@ -186,25 +186,7 @@ function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // ===== STAGE 9: SELEKSI =====
-  if(stage===9){
-const t = selectTargets[selectStep];
-
-ctx.fillStyle='#2c3e50';
-ctx.font='bold 20px Arial';
-ctx.textAlign='center';
-ctx.fillText(
-  `Seleksi dari ${t.from} ke ${t.to} (min. ${t.min} blok)`,
-  canvas.width/2,32
-);
-
-ctx.font='16px Arial';
-ctx.fillText(
-  'Klik + drag untuk memblok area secara presisi',
-  canvas.width/2,54
-);
-
-    return;
-  }
+if(stage===9)
 
   // ===== DROP ZONE =====
   if(stage===5 && dropZone){
