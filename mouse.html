@@ -61,7 +61,7 @@ const timerEl = document.getElementById('timer');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=3,currentTarget=0,isProcessing=false;
+let stage=1,targetCount=2,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
@@ -483,14 +483,14 @@ if(count>=t.min){
   selectBoxes.forEach(b=>b.selected=false);
 
   if(selectStep >= selectTargets.length){
-    next(); // ⬅️ sekarang ini BENAR-BENAR selesai
+    next();
+    return; // ⬅️ HENTIKAN render stage 9
   }
 }
 
-
-  selectStart=null;
-  selectRect=null;
-  draw();
+selectStart=null;
+selectRect=null;
+draw();
 }
 
 
