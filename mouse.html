@@ -329,7 +329,14 @@ if(stage===9){
   ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
 
   document.getElementById('stage').textContent=stage;
-  document.getElementById('currentTarget').textContent=currentTarget+1;
+  if(stage === 9){
+  document.getElementById('currentTarget').textContent = selectStep + 1;
+  document.getElementById('targetCount').textContent = selectTargets.length;
+}else{
+  document.getElementById('currentTarget').textContent = currentTarget + 1;
+  document.getElementById('targetCount').textContent = targetCount;
+}
+
   document.getElementById('targetCount').textContent=targetCount;
 }
 
