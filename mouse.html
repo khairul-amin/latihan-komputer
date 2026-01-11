@@ -2,215 +2,484 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Latihan Mouse + Timer</title>
+
 <style>
-body{margin:0;display:flex;flex-direction:column;font-family:Arial}
-#info{background:#f8f9fa;padding:10px;font-size:18px;border-bottom:1px solid #ccc;display:flex;justify-content:space-between}
-canvas{flex-grow:1;background:#f0f0f0}
-#summary{display:none;padding:20px}
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+#info {
+  background: #f8f9fa;
+  padding: 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+#timer { font-weight: bold; }
+canvas { flex-grow: 1; background: #f0f0f0; }
+#summary { display:none; padding:20px; }
+table { width:100%; border-collapse:collapse; }
+td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 .good{color:green;font-weight:bold}
 .bad{color:red;font-weight:bold}
 </style>
 </head>
+
 <body>
 
 <div id="info">
   <div>Stage: <span id="stage">1</span></div>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">5</span></div>
+  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
   <div id="timer">⏱ 0.0s</div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
 <div id="summary">
-  <h2>📊 Rekap</h2>
-  <table border="1" width="100%">
+  <h2>📊 Rekap Latihan Mouse</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th><th>Latihan</th><th>Waktu</th><th>Status</th>
+      </tr>
+    </thead>
     <tbody id="summaryBody"></tbody>
   </table>
 </div>
 
 <script>
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-canvas.width=innerWidth;
-canvas.height=innerHeight-60;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const timerEl = document.getElementById('timer');
 
-let stage=1;
-let targetCount=3;
-let currentTarget=0;
-let isProcessing=false;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let target;
-let dropZone=null;
+let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
+let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
+
+// ===== DRAG & DROP =====
+let dropZone=null;
+let snapping=false;
+
+// ===== SELEKSI AREA =====
+let selectStart=null, selectRect=null;
+let selectBoxes=[];
+
+// ===== WARNA =====
+const stageColors={
+  1:'#e74c3c',2:'#3498db',3:'#27ae60',
+  4:'#9b59b6',5:'#f39c12',
+  8:'#2c3e50',9:'#34495e'
+};
 
 // ===== TIMER =====
 let stageStart=Date.now(), timerInterval;
-const timePerStage={1:2,2:2,3:2,4:1.5,5:3,8:2,9:6};
-const tolerance=0.3;
-const summary=[];
+const timePerTarget = {
+  1: 2.0,  // hover
+  2: 2.0,  // klik kiri
+  3: 2.0,  // klik kanan
+  4: 1.5,  // double click
+  5: 3.0,  // drag & drop
+  8: 2.0,  // scroll
+  9: 6.0   // seleksi area
+};
+
+
+const tolerance = 0.3; // SMP
+
+function getStageLimit(stage){
+  return (timePerTarget[stage]*targetCount)*(1+tolerance);
+}
+
+const stageNames={
+  1:'Sorot',2:'Klik kiri',3:'Klik kanan',
+  4:'Double click',5:'Drag & Drop',
+  8:'Scroll',9:'Seleksi Area'
+};
+let summary=[];
 
 function startTimer(){
   stageStart=Date.now();
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
     const t=((Date.now()-stageStart)/1000).toFixed(1);
-    document.getElementById('timer').textContent=`⏱ ${t}s`;
+    timerEl.textContent=`⏱ ${t}s`;
+    timerEl.style.color = t <= getStageLimit(stage) ? 'green' : 'red';
   },100);
 }
-
 function stopTimer(){
   clearInterval(timerInterval);
-  const t=((Date.now()-stageStart)/1000);
-  summary.push({stage,time:t.toFixed(1)});
+  const t = ((Date.now() - stageStart) / 1000);
+  const limit = getStageLimit(stage);
+
+  summary.push({
+    stage,
+    name: stageNames[stage],
+    time: t.toFixed(1),
+    ok: t <= limit,
+    limit: limit.toFixed(1)
+  });
 }
+
 
 // ===== UTIL =====
 function randPos(w=170,h=60){
-  return {x:Math.random()*(canvas.width-w-40)+20,
-          y:Math.random()*(canvas.height-h-40)+20,w,h};
+  return {
+    x:Math.random()*(canvas.width-w-40)+20,
+    y:Math.random()*(canvas.height-h-40)+20,
+    w,h
+  };
+}
+function hit(e,o){
+  return e.offsetX>=o.x&&e.offsetX<=o.x+o.w&&
+         e.offsetY>=o.y&&e.offsetY<=o.y+o.h;
+}
+function randInt(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-// ===== STAGE FLOW =====
-function nextTarget(){
-  currentTarget++;
-  if(currentTarget>=targetCount){
-    nextStage();
-  }else{
-    target=randPos();
-    draw();
+function cellLabel(r,c){
+  return String.fromCharCode(65+r)+(c+1);
+}
+
+function generateSelectTargets(count){
+  const targets=[];
+
+  for(let i=0;i<count;i++){
+    const r1=randInt(0,7);
+    const c1=randInt(0,7);
+
+    const h=randInt(2,4);
+    const w=randInt(2,4);
+
+    const r2=Math.min(r1+h,9);
+    const c2=Math.min(c1+w,9);
+
+    const area=(r2-r1+1)*(c2-c1+1);
+
+    targets.push({
+      r1,c1,r2,c2,
+      from:cellLabel(r1,c1),
+      to:cellLabel(r2,c2),
+      min:Math.ceil(area*0.7)
+    });
   }
+
+  return targets;
 }
 
-function nextStage(){
-  stopTimer();
-  stage++;
-  currentTarget=0;
 
-  if(stage===6||stage===7)stage=8;
-  if(stage>9){showSummary();return;}
+let selectStep = 0;
 
-  if(stage===9){
-    initSelectStage();
-  }else{
-    target=randPos();
-    if(stage===5)dropZone=randPos(240,90);
-  }
-
-  startTimer();
-  draw();
-}
-
-// ===== SELEKSI AREA (STAGE 9) =====
-let selectBoxes=[],selectTargets=[],selectStep=0;
-let selectStart=null,selectRect=null,gridArea=null;
-
-function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-function cellLabel(r,c){return String.fromCharCode(65+r)+(c+1)}
-
-function generateSelectTargets(n){
-  const arr=[];
-  for(let i=0;i<n;i++){
-    let r1=randInt(0,7),c1=randInt(0,7);
-    let r2=r1+randInt(1,3),c2=c1+randInt(1,3);
-    arr.push({r1,c1,r2,c2,from:cellLabel(r1,c1),to:cellLabel(r2,c2),min:2});
-  }
-  return arr;
-}
+let selectTargets=[];
 
 function initSelectStage(){
   selectBoxes=[];
   selectStep=0;
-  selectTargets=generateSelectTargets(targetCount);
+  selectTargets = generateSelectTargets(targetCount);
 
-  const size=36,gap=6;
-  const startX=(canvas.width-(10*size+9*gap))/2;
-  const startY=120;
+  const cols = 10, rows = 10;
+  const SAFE_TOP = 90;
+  const SAFE_BOTTOM = 20;
+  const SAFE_SIDE = 20;
 
-  gridArea={x:startX,y:startY,w:10*size+9*gap,h:10*size+9*gap};
+  const usableW = canvas.width - SAFE_SIDE*2;
+  const usableH = canvas.height - SAFE_TOP - SAFE_BOTTOM;
 
-  for(let r=0;r<10;r++){
-    for(let c=0;c<10;c++){
+  // hitung size maksimum agar grid muat
+  const maxSizeW = (usableW - (cols-1)*6) / cols;
+  const maxSizeH = (usableH - (rows-1)*6) / rows;
+
+  // clamp ukuran
+  const size = Math.max(28, Math.min(42, Math.floor(Math.min(maxSizeW, maxSizeH))));
+  const gap  = Math.floor(size * 0.15);
+
+  const gridW = cols*size + (cols-1)*gap;
+  const gridH = rows*size + (rows-1)*gap;
+
+  const startX = (canvas.width - gridW) / 2;
+  const startY = SAFE_TOP + (usableH - gridH) / 2;
+  
+  gridArea = {
+    x: startX,
+    y: startY,
+    w: gridW,
+    h: gridH
+  };
+
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
       selectBoxes.push({
-        x:startX+c*(size+gap),
-        y:startY+r*(size+gap),
-        w:size,h:size,row:r,col:c,selected:false,label:cellLabel(r,c)
+        x: startX + c*(size+gap),
+        y: startY + r*(size+gap),
+        w: size,
+        h: size,
+        row: r,
+        col: c,
+        label: cellLabel(r,c),
+        selected: false
       });
     }
   }
 }
 
+
+
+
+// ===== SNAP ANIM =====
+function snapToDrop(){
+  snapping=true;
+  const tx=dropZone.x+(dropZone.w-target.w)/2;
+  const ty=dropZone.y+(dropZone.h-target.h)/2;
+
+  function anim(){
+    target.x+=(tx-target.x)*0.25;
+    target.y+=(ty-target.y)*0.25;
+    draw();
+    if(Math.abs(target.x-tx)<1&&Math.abs(target.y-ty)<1){
+      snapping=false;
+      next();
+      return;
+    }
+    requestAnimationFrame(anim);
+  }
+  anim();
+}
+
 // ===== DRAW =====
+let target;
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  document.getElementById('stage').textContent=stage;
 
-  if(stage===9){
-    const t=selectTargets[selectStep];
-    ctx.font='18px Arial';
+  // ===== STAGE 9: SELEKSI =====
+if(stage===9){
+  const t = selectTargets[selectStep];
+
+  // Judul
+  ctx.fillStyle='#2c3e50';
+  ctx.font='bold 20px Arial';
+  ctx.textAlign='center';
+  ctx.fillText(
+    `Seleksi dari ${t.from} ke ${t.to}`,
+    canvas.width/2,32
+  );
+
+  ctx.font='16px Arial';
+  ctx.fillText(
+    'Klik + drag untuk memblok area secara presisi',
+    canvas.width/2,54
+  );
+
+  // ===== GAMBAR GRID =====
+  selectBoxes.forEach(b=>{
+    ctx.fillStyle = b.selected ? '#3498db' : '#ecf0f1';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+
+    ctx.strokeStyle='#7f8c8d';
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+    ctx.fillStyle='#2c3e50';
+    ctx.font='12px Arial';
     ctx.textAlign='center';
-    ctx.fillText(`Seleksi dari ${t.from} ke ${t.to}`,canvas.width/2,40);
+    ctx.textBaseline='middle';
+    ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+  });
 
-    selectBoxes.forEach(b=>{
-      ctx.fillStyle=b.selected?'#3498db':'#ecf0f1';
-      ctx.fillRect(b.x,b.y,b.w,b.h);
-      ctx.strokeRect(b.x,b.y,b.w,b.h);
-      ctx.fillStyle='#000';
-      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
-    });
-    return;
+  // ===== GAMBAR AREA DRAG =====
+  if(selectRect){
+    ctx.strokeStyle='#e74c3c';
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,4]);
+    ctx.strokeRect(
+      selectRect.x,
+      selectRect.y,
+      selectRect.w,
+      selectRect.h
+    );
+    ctx.setLineDash([]);
   }
 
-  ctx.fillStyle='#3498db';
+  return;
+}
+
+
+  // ===== DROP ZONE =====
+  if(stage===5 && dropZone){
+    ctx.strokeStyle='#27ae60';
+    ctx.lineWidth=3;
+    ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
+  }
+
+  // ===== TARGET =====
+  ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
+
+  ctx.fillStyle='#fff';
+  ctx.font='bold 24px Arial';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
+
+  document.getElementById('stage').textContent=stage;
   document.getElementById('currentTarget').textContent=currentTarget+1;
   document.getElementById('targetCount').textContent=targetCount;
 }
 
-// ===== EVENTS =====
-canvas.addEventListener('mousemove',e=>{
-  if(stage===1)nextTarget();
-});
+// ===== FLOW =====
+function next(){
+  if(isProcessing)return;
+  isProcessing=true;
 
-canvas.addEventListener('click',e=>{
-  if(stage===2)nextTarget();
-});
+  setTimeout(()=>{
 
-canvas.addEventListener('contextmenu',e=>{
-  e.preventDefault();
-  if(stage===3)nextTarget();
-});
-
-canvas.addEventListener('dblclick',e=>{
-  if(stage===4)nextTarget();
-});
-
-canvas.addEventListener('wheel',e=>{
-  if(stage===8){
-    scrollVal+=Math.abs(e.deltaY);
-    if(scrollVal>600){
-      scrollVal=0;
-      nextStage();
+    // ❗ currentTarget HANYA UNTUK STAGE < 9
+    if(stage !== 9){
+      currentTarget++;
     }
+
+if(
+  (stage !== 9 && currentTarget >= targetCount) ||
+  (stage === 9 && false)
+){
+}
+
+    if(stage===9){
+      initSelectStage();
+    }else{
+      target=randPos();
+      if(stage===5) dropZone=randPos(240,90);
+    }
+
+    isProcessing=false;
+    draw();
+  },300);
+}
+
+
+// ===== EVENTS =====
+canvas.addEventListener('mousedown',e=>{
+  if(stage===5 && hit(e,target)){
+    dragging=true;
+    dragOffset.x=e.offsetX-target.x;
+    dragOffset.y=e.offsetY-target.y;
   }
+if(stage===9){
+  // hanya boleh mulai seleksi di dalam grid
+  if(
+    e.offsetX < gridArea.x ||
+    e.offsetX > gridArea.x + gridArea.w ||
+    e.offsetY < gridArea.y ||
+    e.offsetY > gridArea.y + gridArea.h
+  ) return;
+
+  selectStart = { x: e.offsetX, y: e.offsetY };
+  selectRect = null;
+}
 });
 
-canvas.addEventListener('mousedown',e=>{
-  if(stage===9){
-    if(e.offsetX<gridArea.x||e.offsetX>gridArea.x+gridArea.w||
-       e.offsetY<gridArea.y||e.offsetY>gridArea.y+gridArea.h)return;
-    selectStart={x:e.offsetX,y:e.offsetY};
+canvas.addEventListener('mousemove',e=>{
+  if(stage===5 && dragging && !snapping){
+    target.x=e.offsetX-dragOffset.x;
+    target.y=e.offsetY-dragOffset.y;
+    draw();
   }
+if(stage===9 && selectStart){
+const x1 = Math.max(gridArea.x, Math.min(selectStart.x, e.offsetX));
+const y1 = Math.max(gridArea.y, Math.min(selectStart.y, e.offsetY));
+const x2 = Math.min(gridArea.x + gridArea.w, Math.max(selectStart.x, e.offsetX));
+const y2 = Math.min(gridArea.y + gridArea.h, Math.max(selectStart.y, e.offsetY));
+
+selectRect = {
+  x: x1,
+  y: y1,
+  w: x2 - x1,
+  h: y2 - y1
+};
+
+selectBoxes.forEach(b=>{
+  const ox = Math.max(0,
+    Math.min(b.x + b.w, selectRect.x + selectRect.w) -
+    Math.max(b.x, selectRect.x)
+  );
+  const oy = Math.max(0,
+    Math.min(b.y + b.h, selectRect.y + selectRect.h) -
+    Math.max(b.y, selectRect.y)
+  );
+
+  const overlap = ox * oy;
+  b.selected = overlap / (b.w * b.h) >= 0.5;
+});
+
+
+  draw();
+}
+
 });
 
 canvas.addEventListener('mouseup',()=>{
-  if(stage===9){
-    selectStep++;
-    selectBoxes.forEach(b=>b.selected=false);
-    if(selectStep>=selectTargets.length){
-      nextStage();
+  if(stage===5 && dragging){
+    dragging=false;
+    const cx=target.x+target.w/2;
+    const cy=target.y+target.h/2;
+    if(
+      cx>dropZone.x&&cx<dropZone.x+dropZone.w&&
+      cy>dropZone.y&&cy<dropZone.y+dropZone.h
+    ){
+      snapToDrop();
     }
-    draw();
+  }
+if(stage===9 && selectRect){
+  const t=selectTargets[selectStep];
+
+  const count=selectBoxes.filter(b=>
+    b.selected &&
+    b.row>=t.r1 && b.row<=t.r2 &&
+    b.col>=t.c1 && b.col<=t.c2
+  ).length;
+
+  if(count>=t.min){
+    selectStep++;
+
+    selectBoxes.forEach(b=>b.selected=false);
+
+    if(selectStep>=selectTargets.length){
+      next();
+    }
+  }
+
+  selectStart=null;
+  selectRect=null;
+  draw();
+}
+
+
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(stage===1&&hit(e,target))next();
+});
+canvas.addEventListener('click',e=>{
+  if(stage===2&&hit(e,target))next();
+});
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(stage===3&&hit(e,target))next();
+});
+canvas.addEventListener('dblclick',e=>{
+  if(stage===4&&hit(e,target))next();
+});
+canvas.addEventListener('wheel',e=>{
+  if(stage===8){
+    scrollVal+=Math.abs(e.deltaY);
+    if(scrollVal>600)next();
   }
 });
 
@@ -219,9 +488,15 @@ function showSummary(){
   canvas.style.display='none';
   document.getElementById('info').style.display='none';
   document.getElementById('summary').style.display='block';
-  const tb=document.getElementById('summaryBody');
+  const tbody=document.getElementById('summaryBody');
   summary.forEach(s=>{
-    tb.innerHTML+=`<tr><td>${s.stage}</td><td>${s.time}s</td></tr>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${s.stage}</td>
+      <td>${s.name}</td>
+      <td>${s.time}s</td>
+      <td class="${s.ok?'good':'bad'}">${s.ok?'NORMAL':'LAMBAT'}</td>`;
+    tbody.appendChild(tr);
   });
 }
 
@@ -230,5 +505,6 @@ target=randPos();
 startTimer();
 draw();
 </script>
+
 </body>
 </html>
