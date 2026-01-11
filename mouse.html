@@ -116,16 +116,18 @@ function startTimer(){
 }
 function stopTimer(){
   clearInterval(timerInterval);
-const limit = getStageLimit(stage);
-summary.push({
-  stage,
-  name:stageNames[stage],
-  time:t,
-  ok:t<=limit,
-  limit:limit.toFixed(1)
-});
+  const t = ((Date.now() - stageStart) / 1000);
+  const limit = getStageLimit(stage);
 
+  summary.push({
+    stage,
+    name: stageNames[stage],
+    time: t.toFixed(1),
+    ok: t <= limit,
+    limit: limit.toFixed(1)
+  });
 }
+
 
 // ===== UTIL =====
 function randPos(w=170,h=60){
