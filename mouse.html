@@ -61,7 +61,7 @@ const timerEl = document.getElementById('timer');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=2,currentTarget=0,isProcessing=false;
+let stage=1,targetCount=3,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
@@ -344,34 +344,56 @@ if(stage===9){
 function next(){
   if(isProcessing)return;
   isProcessing=true;
+
   setTimeout(()=>{
 
-    // ⛔ JANGAN naikkan currentTarget di stage 9
-    if(stage !== 9){
-      currentTarget++;
-    }
-
-    if(currentTarget>=targetCount){
+    // ===== STAGE 9: SELESAI BERDASARKAN selectStep =====
+    if(stage === 9){
       stopTimer();
       stage++;
-      currentTarget=0;
+      currentTarget = 0;
+
+      if(stage>9){
+        showSummary();
+        return;
+      }
+
+      startTimer();
+      target = randPos();
+      isProcessing=false;
+      draw();
+      return;
+    }
+
+    // ===== STAGE NORMAL =====
+    currentTarget++;
+
+    if(currentTarget >= targetCount){
+      stopTimer();
+      stage++;
+      currentTarget = 0;
 
       if(stage===6||stage===7)stage=8;
-      if(stage>9){showSummary();return;}
+      if(stage>9){
+        showSummary();
+        return;
+      }
 
       startTimer();
     }
 
-    if(stage===9) initSelectStage();
-    else{
-      target=randPos();
-      if(stage===5) dropZone=randPos(240,90);
+    if(stage===9){
+      initSelectStage();
+    }else{
+      target = randPos();
+      if(stage===5) dropZone = randPos(240,90);
     }
 
     isProcessing=false;
     draw();
   },300);
 }
+
 
 
 // ===== EVENTS =====
@@ -455,16 +477,16 @@ if(stage===9 && selectRect){
     b.col>=t.c1 && b.col<=t.c2
   ).length;
 
-  if(count>=t.min){
-    selectStep++;
+if(count>=t.min){
+  selectStep++;
 
+  selectBoxes.forEach(b=>b.selected=false);
 
-    selectBoxes.forEach(b=>b.selected=false);
-
-    if(selectStep>=selectTargets.length){
-      next();
-    }
+  if(selectStep >= selectTargets.length){
+    next(); // ⬅️ sekarang ini BENAR-BENAR selesai
   }
+}
+
 
   selectStart=null;
   selectRect=null;
