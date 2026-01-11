@@ -61,7 +61,7 @@ const timerEl = document.getElementById('timer');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=5,currentTarget=0,isProcessing=false;
+let stage=1,targetCount=25,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
@@ -337,32 +337,25 @@ if(stage===9){
 function next(){
   if(isProcessing)return;
   isProcessing=true;
-
   setTimeout(()=>{
-
-    // ❗ currentTarget HANYA UNTUK STAGE < 9
-    if(stage !== 9){
-      currentTarget++;
+    currentTarget++;
+    if(currentTarget>=targetCount){
+      stopTimer();
+      stage++;
+      currentTarget=0;
+      if(stage===6||stage===7)stage=8;
+      if(stage>9){showSummary();return;}
+      startTimer();
     }
-
-if(
-  (stage !== 9 && currentTarget >= targetCount) ||
-  (stage === 9 && false)
-){
-}
-
-    if(stage===9){
-      initSelectStage();
-    }else{
+    if(stage===9) initSelectStage();
+    else{
       target=randPos();
       if(stage===5) dropZone=randPos(240,90);
     }
-
     isProcessing=false;
     draw();
   },300);
 }
-
 
 // ===== EVENTS =====
 canvas.addEventListener('mousedown',e=>{
@@ -447,6 +440,7 @@ if(stage===9 && selectRect){
 
   if(count>=t.min){
     selectStep++;
+    currentTarget++;
 
     selectBoxes.forEach(b=>b.selected=false);
 
