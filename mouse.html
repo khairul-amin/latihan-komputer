@@ -198,8 +198,6 @@ function initSelectStage(){
   const maxSizeH = (usableH - (rows-1)*6) / rows;
 
   // clamp ukuran
-  let gridArea = null;
-
   const size = Math.max(28, Math.min(42, Math.floor(Math.min(maxSizeW, maxSizeH))));
   const gap  = Math.floor(size * 0.15);
 
@@ -398,16 +396,20 @@ selectRect = {
   h: y2 - y1
 };
 
-  selectBoxes.forEach(b=>{
-    const ox = Math.max(0,
-      Math.min(b.x+b.w,x+w)-Math.max(b.x,x)
-    );
-    const oy = Math.max(0,
-      Math.min(b.y+b.h,y+h)-Math.max(b.y,y)
-    );
-    const overlap = ox*oy;
-    b.selected = overlap/(b.w*b.h) >= 0.5;
-  });
+selectBoxes.forEach(b=>{
+  const ox = Math.max(0,
+    Math.min(b.x + b.w, selectRect.x + selectRect.w) -
+    Math.max(b.x, selectRect.x)
+  );
+  const oy = Math.max(0,
+    Math.min(b.y + b.h, selectRect.y + selectRect.h) -
+    Math.max(b.y, selectRect.y)
+  );
+
+  const overlap = ox * oy;
+  b.selected = overlap / (b.w * b.h) >= 0.5;
+});
+
 
   draw();
 }
