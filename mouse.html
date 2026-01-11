@@ -186,25 +186,56 @@ function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // ===== STAGE 9: SELEKSI =====
-  if(stage===9){
-const t = selectTargets[selectStep];
+if(stage===9){
+  const t = selectTargets[selectStep];
 
-ctx.fillStyle='#2c3e50';
-ctx.font='bold 20px Arial';
-ctx.textAlign='center';
-ctx.fillText(
-  `Seleksi dari ${t.from} ke ${t.to} (min. ${t.min} blok)`,
-  canvas.width/2,32
-);
+  // Judul
+  ctx.fillStyle='#2c3e50';
+  ctx.font='bold 20px Arial';
+  ctx.textAlign='center';
+  ctx.fillText(
+    `Seleksi dari ${t.from} ke ${t.to} (min. ${t.min} blok)`,
+    canvas.width/2,32
+  );
 
-ctx.font='16px Arial';
-ctx.fillText(
-  'Klik + drag untuk memblok area secara presisi',
-  canvas.width/2,54
-);
+  ctx.font='16px Arial';
+  ctx.fillText(
+    'Klik + drag untuk memblok area secara presisi',
+    canvas.width/2,54
+  );
 
-    return;
+  // ===== GAMBAR GRID =====
+  selectBoxes.forEach(b=>{
+    ctx.fillStyle = b.selected ? '#3498db' : '#ecf0f1';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+
+    ctx.strokeStyle='#7f8c8d';
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+    ctx.fillStyle='#2c3e50';
+    ctx.font='12px Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+  });
+
+  // ===== GAMBAR AREA DRAG =====
+  if(selectRect){
+    ctx.strokeStyle='#e74c3c';
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,4]);
+    ctx.strokeRect(
+      selectRect.x,
+      selectRect.y,
+      selectRect.w,
+      selectRect.h
+    );
+    ctx.setLineDash([]);
   }
+
+  return;
+}
+
 
   // ===== DROP ZONE =====
   if(stage===5 && dropZone){
