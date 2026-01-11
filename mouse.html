@@ -119,43 +119,31 @@ function hit(e,o){
 }
 
 // ===== INIT SELEKSI (GRID) =====
-const selectTargets = [
-  { from: 'A1', to: 'B3', min: 6 },
-  { from: 'C2', to: 'D5', min: 8 },
-  { from: 'A4', to: 'C6', min: 9 },
-  { from: 'B1', to: 'E3', min: 10 },
-  { from: 'C3', to: 'F6', min: 12 }
-];
-
-let selectStep = 0;
-
 function initSelectStage(){
-  selectBoxes = [];
-  selectStep = 0;
-  currentTarget = 0;
+  selectBoxes=[];
+  const cols=5;
+  const rows=4;
+  const size=80;
+  const gap=15;
 
-  const cols = 6;
-  const rows = 6;
-  const size = 60;
-  const gap = 15;
+  const startX=(canvas.width-(cols*size+(cols-1)*gap))/2;
+  const startY=(canvas.height-(rows*size+(rows-1)*gap))/2;
 
-  const startX = canvas.width/2 - (cols*(size+gap))/2;
-  const startY = canvas.height/2 - (rows*(size+gap))/2;
-
+  let idx=0;
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       selectBoxes.push({
-        x:startX + c*(size+gap),
-        y:startY + r*(size+gap),
+        x:startX+c*(size+gap),
+        y:startY+r*(size+gap),
         w:size,
         h:size,
         label:String.fromCharCode(65+r)+(c+1),
         selected:false
       });
+      idx++;
     }
   }
 }
-
 
 // ===== SNAP ANIM =====
 function snapToDrop(){
@@ -184,24 +172,34 @@ function draw(){
 
   // ===== STAGE 9: SELEKSI =====
   if(stage===9){
-  const t = selectTargets[selectStep];
+    // Instruksi
+    ctx.fillStyle='#2c3e50';
+    ctx.font='bold 20px Arial';
+    ctx.textAlign='center';
+    ctx.fillText(
+      'Klik + drag untuk menyeleksi beberapa blok (min. 5 blok)',
+      canvas.width/2,40
+    );
 
-ctx.fillStyle='#333';
-ctx.font='bold 22px Arial';
-ctx.textAlign='center';
-ctx.fillText(
-  `Seleksi dari ${t.from} ke ${t.to} (min. ${t.min} blok)`,
-  canvas.width/2,
-  40
-);
+    selectBoxes.forEach(b=>{
+      ctx.fillStyle=b.selected?'#2ecc71':'#95a5a6';
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      ctx.strokeStyle='#333';
+      ctx.strokeRect(b.x,b.y,b.w,b.h);
 
-ctx.font='16px Arial';
-ctx.fillText(
-  'Klik + drag untuk menyeleksi beberapa blok',
-  canvas.width/2,
-  65
-);
+      ctx.fillStyle='#fff';
+      ctx.font='bold 18px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
+    });
 
+    if(selectRect){
+      ctx.fillStyle='rgba(52,152,219,0.25)';
+      ctx.strokeStyle='#2980b9';
+      ctx.fillRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+      ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+    }
     return;
   }
 
@@ -277,44 +275,34 @@ canvas.addEventListener('mousemove',e=>{
     const h=Math.abs(e.offsetY-selectStart.y);
     selectRect={x,y,w,h};
 
-selectBoxes.forEach(b=>{
-  const overlapX = Math.max(0,
-    Math.min(b.x+b.w, x+w) - Math.max(b.x, x)
-  );
-  const overlapY = Math.max(0,
-    Math.min(b.y+b.h, y+h) - Math.max(b.y, y)
-  );
-
-  const overlapArea = overlapX * overlapY;
-  const boxArea = b.w * b.h;
-
-  b.selected = overlapArea / boxArea > 0.5;
-});
-
+    selectBoxes.forEach(b=>{
+      b.selected=!(
+        b.x+b.w<x||b.x>x+w||
+        b.y+b.h<y||b.y>y+h
+      );
+    });
     draw();
   }
 });
 
 canvas.addEventListener('mouseup',()=>{
-  if(stage!==9 || !selectRect) return;
-
-  const target = selectTargets[selectStep];
-  const selectedCount = selectBoxes.filter(b=>b.selected).length;
-
-  if(selectedCount >= target.min){
-    selectStep++;
-    currentTarget++;
-
-    if(selectStep >= selectTargets.length){
-      next(); // lanjut stage berikutnya
+  if(stage===5 && dragging){
+    dragging=false;
+    const cx=target.x+target.w/2;
+    const cy=target.y+target.h/2;
+    if(
+      cx>dropZone.x&&cx<dropZone.x+dropZone.w&&
+      cy>dropZone.y&&cy<dropZone.y+dropZone.h
+    ){
+      snapToDrop();
     }
   }
-
-  selectStart = null;
-  selectRect = null;
-  draw();
+  if(stage===9 && selectRect){
+    if(selectBoxes.filter(b=>b.selected).length>=5) next();
+    selectStart=null;
+    selectRect=null;
+  }
 });
-
 
 canvas.addEventListener('mousemove',e=>{
   if(stage===1&&hit(e,target))next();
