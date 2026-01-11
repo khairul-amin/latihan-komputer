@@ -82,7 +82,22 @@ const stageColors={
 
 // ===== TIMER =====
 let stageStart=Date.now(), timerInterval;
-const stageTimeLimit={1:20,2:25,3:25,4:30,5:40,8:20,9:45};
+const timePerTarget = {
+  1:0.6,  // hover
+  2:0.7,  // klik kiri
+  3:0.8,  // klik kanan
+  4:1.0,  // double
+  5:2.0,  // drag
+  8:1.2,  // scroll
+  9:6.0   // seleksi
+};
+
+const tolerance = 0.3; // SMP
+
+function getStageLimit(stage){
+  return (timePerTarget[stage]*targetCount)*(1+tolerance);
+}
+
 const stageNames={
   1:'Sorot',2:'Klik kiri',3:'Klik kanan',
   4:'Double click',5:'Drag & Drop',
@@ -96,13 +111,20 @@ function startTimer(){
   timerInterval=setInterval(()=>{
     const t=((Date.now()-stageStart)/1000).toFixed(1);
     timerEl.textContent=`⏱ ${t}s`;
-    timerEl.style.color=t<=stageTimeLimit[stage]?'green':'red';
+    timerEl.style.color = t <= getStageLimit(stage) ? 'green' : 'red';
   },100);
 }
 function stopTimer(){
   clearInterval(timerInterval);
-  const t=((Date.now()-stageStart)/1000).toFixed(1);
-  summary.push({stage,name:stageNames[stage],time:t,ok:t<=stageTimeLimit[stage]});
+const limit = getStageLimit(stage);
+summary.push({
+  stage,
+  name:stageNames[stage],
+  time:t,
+  ok:t<=limit,
+  limit:limit.toFixed(1)
+});
+
 }
 
 // ===== UTIL =====
