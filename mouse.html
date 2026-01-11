@@ -337,25 +337,37 @@ if(stage===9){
 function next(){
   if(isProcessing)return;
   isProcessing=true;
+
   setTimeout(()=>{
-    currentTarget++;
-    if(currentTarget>=targetCount){
+
+    // ❗ currentTarget HANYA UNTUK STAGE < 9
+    if(stage !== 9){
+      currentTarget++;
+    }
+
+    if(currentTarget>=targetCount || stage===9){
       stopTimer();
       stage++;
       currentTarget=0;
+
       if(stage===6||stage===7)stage=8;
       if(stage>9){showSummary();return;}
+
       startTimer();
     }
-    if(stage===9) initSelectStage();
-    else{
+
+    if(stage===9){
+      initSelectStage();
+    }else{
       target=randPos();
       if(stage===5) dropZone=randPos(240,90);
     }
+
     isProcessing=false;
     draw();
   },300);
 }
+
 
 // ===== EVENTS =====
 canvas.addEventListener('mousedown',e=>{
