@@ -86,6 +86,20 @@
 </head>
 <body>
   <div id="info">
+    <div style="margin-top:8px;">
+  Lompat ke Stage:
+  <select id="stageSelector">
+    <option value="1">1 – Random Key</option>
+    <option value="2">2 – Kombinasi</option>
+    <option value="3">3 – Shift</option>
+    <option value="4">4 – Backspace</option>
+    <option value="5">5 – Multi Text</option>
+    <option value="6">6 – Arrow Navigation</option>
+    <option value="7">7 – TAB Navigation</option>
+  </select>
+  <button id="goStage">Mulai</button>
+</div>
+
     <div>Stage: <span id="stage">1</span></div>
     <div>Task: <span id="taskDescription"></span></div>
     <a href="/#!/login">KLIK INI UNTUK KEMBALI KE BERANDA</a>
@@ -102,6 +116,60 @@
     
   </div>
   <script>
+document.getElementById("goStage").onclick = () => {
+  const s = parseInt(document.getElementById("stageSelector").value);
+  jumpToStage(s);
+};
+
+function jumpToStage(s){
+  stage = s;
+  currentTask = 0;
+  stageElement.textContent = stage;
+
+  // bersihkan semua tampilan
+  hideArrowGrid();
+  inputBox.style.display="none";
+  input1.style.display="none";
+  input2.style.display="none";
+  input3.style.display="none";
+  input4.style.display="none";
+  document.body.style.cursor="default";
+
+  switch(stage){
+    case 1:
+      taskDescription.textContent = "Tekan tombol huruf atau angka.";
+      prepareRandomKeyTask();
+      break;
+    case 2:
+      taskDescription.textContent = "Ketik kombinasi huruf tertentu lalu tekan Enter.";
+      prepareTypingCombinationTask();
+      break;
+    case 3:
+      taskDescription.textContent = "Ketik huruf kapital dengan Shift.";
+      prepareShiftKeyTask();
+      break;
+    case 4:
+      taskDescription.textContent = "Hapus karakter tertentu lalu tekan Enter.";
+      prepareBackspaceTask();
+      break;
+    case 5:
+      taskDescription.textContent = "Isi kotak teks tertentu dengan kombinasi.";
+      prepareMultiTextCombinationTask();
+      break;
+    case 6:
+      taskDescription.textContent = "Gunakan panah keyboard menuju huruf target.";
+      prepareArrowStage();
+      break;
+    case 7:
+      taskDescription.textContent = "Gunakan TAB untuk navigasi antar kotak.";
+      prepareTabNavigation();
+      break;
+  }
+}
+
+
+
+    
     const stageElement = document.getElementById("stage");
     const taskDescription = document.getElementById("taskDescription");
     const targetDisplay = document.getElementById("targetDisplay");
