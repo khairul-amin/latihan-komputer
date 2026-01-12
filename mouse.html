@@ -18,9 +18,30 @@ body {
   font-size: 18px;
   border-bottom: 1px solid #ccc;
   display: flex;
+  flex-direction: column; /* jadi atas–bawah */
+}
+
+.info-top {
+  display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
 }
+
+.info-bottom {
+  margin-top: 6px;
+  text-align: left; /* sejajar dengan Stage */
+}
+
+.info-bottom a {
+  font-size: 14px;
+  text-decoration: none;
+  color: #007bff;
+}
+
+.info-bottom a:hover {
+  text-decoration: underline;
+}
+
 #timer { font-weight: bold; }
 canvas { flex-grow: 1; background: #f0f0f0; }
 #summary { display:none; padding:20px; }
@@ -34,11 +55,17 @@ td,th { border:1px solid #ccc; padding:8px; text-align:center; }
 <body>
 
 <div id="info">
-  <div>Stage: <span id="stage">1</span></div>
-   <a href="/#!/login">KLIK INI UNTUK KEMBALI KE BERANDA</a>
-  <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
-  <div id="timer">⏱ 0.0s</div>
+  <div class="info-top">
+    <div>Stage: <span id="stage">1</span></div>
+    <div>Target: <span id="currentTarget">1</span> / <span id="targetCount">30</span></div>
+    <div id="timer">⏱ 0.0s</div>
+  </div>
+
+  <div class="info-bottom">
+    <a href="/#!/login">KLIK INI UNTUK KEMBALI KE BERANDA</a>
+  </div>
 </div>
+
 
 <canvas id="gameCanvas"></canvas>
 
