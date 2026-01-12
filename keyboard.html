@@ -283,6 +283,8 @@ let tabTargetText = "";
 // =======================
 function prepareArrowStage(){
   document.body.style.cursor="not-allowed";
+  c.style.display = "flex";   // nyalakan kembali
+  document.body.style.cursor="not-allowed";
 
   inputBox.style.display="none";
   input1.style.display="none";
@@ -313,6 +315,7 @@ function prepareArrowStage(){
 // STAGE 7 — TAB Navigation
 // =======================
 function prepareTabNavigation(){
+  hideArrowGrid(); 
   input1.style.display="block";
   input2.style.display="block";
   input3.style.display="block";
@@ -356,6 +359,11 @@ function drawArrowGrid(){
       grid.appendChild(cell);
     }
   }
+}
+function hideArrowGrid(){
+  const c = document.getElementById("arrowGridContainer");
+  c.innerHTML = "";
+  c.style.display = "none";
 }
 
 
