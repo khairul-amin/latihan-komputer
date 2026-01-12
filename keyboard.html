@@ -350,9 +350,11 @@ let tabTargetText = "";
 // STAGE 6 — Arrow Navigation
 // =======================
 function prepareArrowStage(){
+  const c = document.getElementById("arrowGridContainer");
+  c.style.display = "flex";   // ← HIDUPKAN LAGI
+  c.innerHTML = "";          // reset isi lama
+
   document.body.style.cursor="not-allowed";
-//  c.style.display = "flex";   // nyalakan kembali
-  //document.body.style.cursor="not-allowed";
 
   inputBox.style.display="none";
   input1.style.display="none";
@@ -375,8 +377,10 @@ function prepareArrowStage(){
   arrowTarget = arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
 
   drawArrowGrid();
-  targetDisplay.textContent = `Gunakan panah (← ↑ → ↓) untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
+  targetDisplay.textContent =
+    `Gunakan panah (← ↑ → ↓) untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
 }
+
 
 
 // =======================
