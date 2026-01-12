@@ -173,14 +173,16 @@ let tabTargetText = "";
             prepareMultiTextCombinationTask();
             break;
         case 6:
-          taskDescription.textContent = "Navigasi menggunakan tombol panah (Arrow)";
-          prepareArrowTask();
+          taskDescription.textContent = "Gunakan tombol panah (← ↑ → ↓) untuk menuju huruf target. Mouse tidak boleh digunakan.";
+          prepareArrowStage();
           break;
+
         
         case 7:
-          taskDescription.textContent = "Navigasi antar kolom menggunakan tombol TAB";
-          prepareTabTask();
+          taskDescription.textContent = "Gunakan TAB dan SHIFT+TAB untuk menuju kotak yang diminta. Mouse tidak boleh digunakan.";
+          prepareTabNavigation();
           break;
+
         default:
           alert("Selamat! Anda telah menyelesaikan semua tahap.");
           resetGame();
@@ -248,31 +250,38 @@ let tabTargetText = "";
     // =======================
 // STAGE 6 — Arrow Navigation
 // =======================
-function prepareArrowTask(){
-  arrowIndex = 0;
-  arrowTarget = Math.floor(Math.random() * arrowChars.length);
-
-  let display = "";
-  for(let i=0;i<arrowChars.length;i++){
-    if(i===arrowIndex) display += "[" + arrowChars[i] + "] ";
-    else display += arrowChars[i] + " ";
-  }
-
-  targetDisplay.textContent =
-    "Gunakan tombol ← → untuk menuju huruf: " + arrowChars[arrowTarget] +
-    "\n\n" + display;
+function prepareArrowStage(){
+  document.body.style.cursor="not-allowed";
 
   inputBox.style.display="none";
   input1.style.display="none";
   input2.style.display="none";
   input3.style.display="none";
   input4.style.display="none";
+
+  arrowGrid=[];
+  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for(let y=0;y<5;y++){
+    const row=[];
+    for(let x=0;x<5;x++){
+      row.push(chars[Math.floor(Math.random()*chars.length)]);
+    }
+    arrowGrid.push(row);
+  }
+
+  arrowX=0;
+  arrowY=0;
+  arrowTarget = arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
+
+  drawArrowGrid();
+  targetDisplay.textContent = `Gunakan panah untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
 }
+
 
 // =======================
 // STAGE 7 — TAB Navigation
 // =======================
-function prepareTabTask(){
+function prepareTabNavigation(){
   input1.style.display="block";
   input2.style.display="block";
   input3.style.display="block";
@@ -283,14 +292,36 @@ function prepareTabTask(){
   input3.value="";
   input4.value="";
 
-  tabTargetBox = Math.floor(Math.random()*4)+1;
-  tabTargetText = getRandomString(4);
+  // lock mouse
+  [input1,input2,input3,input4].forEach(i=>{
+    i.style.pointerEvents="none";
+    i.blur();
+  });
+
+  document.body.style.cursor="not-allowed";
+
+  tabIndex = 0;
+  targetTabIndex = Math.floor(Math.random()*4);
 
   targetDisplay.textContent =
-    "Gunakan tombol TAB untuk pindah ke kotak " +
-    tabTargetBox + ", ketik: " + tabTargetText + ", lalu tekan Enter";
+    `Gunakan TAB / SHIFT+TAB sampai fokus berada di kotak ${targetTabIndex+1}, lalu tekan ENTER`;
 
-  document.getElementById("input1").focus();
+  input1.focus();
+}
+
+function drawArrowGrid(){
+  let html="";
+  for(let y=0;y<5;y++){
+    for(let x=0;x<5;x++){
+      if(x===arrowX && y===arrowY){
+        html += `<span style="background:#3498db;color:#fff;padding:6px;margin:3px;">${arrowGrid[y][x]}</span>`;
+      }else{
+        html += `<span style="border:1px solid #aaa;padding:6px;margin:3px;">${arrowGrid[y][x]}</span>`;
+      }
+    }
+    html+="<br>";
+  }
+  targetDisplay.innerHTML = html;
 }
 
 
@@ -352,41 +383,57 @@ function prepareTabTask(){
             }
         }
             
-    }else if(stage === 6){
-  if(event.key==="ArrowRight"){
-    if(arrowIndex < arrowChars.length-1) arrowIndex++;
-  }
-  if(event.key==="ArrowLeft"){
-    if(arrowIndex > 0) arrowIndex--;
-  }
+    }else if(stage===6){
+  if(event.key==="ArrowUp" && arrowY>0) arrowY--;
+  if(event.key==="ArrowDown" && arrowY<4) arrowY++;
+  if(event.key==="ArrowLeft" && arrowX>0) arrowX--;
+  if(event.key==="ArrowRight" && arrowX<4) arrowX++;
 
-  let display="";
-  for(let i=0;i<arrowChars.length;i++){
-    if(i===arrowIndex) display+="[" + arrowChars[i] + "] ";
-    else display+=arrowChars[i] + " ";
+  if(event.key.startsWith("Arrow")){
+    drawArrowGrid();
   }
 
-  targetDisplay.textContent =
-    "Gunakan tombol ← → untuk menuju huruf: " + arrowChars[arrowTarget] +
-    "\n\n" + display;
-
-  if(arrowIndex === arrowTarget){
-    currentTask++;
-    if(currentTask < 5) prepareArrowTask();
-    else nextStage();
-  }
-}
-
-else if(stage === 7){
   if(event.key==="Enter"){
-    const box = document.getElementById("input"+tabTargetBox);
-    if(box.value === tabTargetText){
+    if(arrowGrid[arrowY][arrowX] === arrowTarget){
       currentTask++;
-      if(currentTask < 5) prepareTabTask();
-      else nextStage();
+      if(currentTask < 8){
+        prepareArrowStage();
+      }else{
+        document.body.style.cursor="default";
+        nextStage();
+      }
     }
   }
-}   });
+} else if(stage===7){
+  if(event.key==="Tab"){
+    event.preventDefault();
+
+    if(event.shiftKey){
+      tabIndex = (tabIndex + 3) % 4;   // mundur
+    }else{
+      tabIndex = (tabIndex + 1) % 4;   // maju
+    }
+
+    [input1,input2,input3,input4][tabIndex].focus();
+  }
+
+  if(event.key==="Enter"){
+    if(tabIndex === targetTabIndex){
+      currentTask++;
+      if(currentTask < 8){
+        prepareTabNavigation();
+      }else{
+        // unlock mouse
+        document.body.style.cursor="default";
+        [input1,input2,input3,input4].forEach(i=>{
+          i.style.pointerEvents="auto";
+        });
+        nextStage();
+      }
+    }
+  }
+}
+  });
 
     // Mulai permainan
     resetGame();
