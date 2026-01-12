@@ -52,6 +52,36 @@
       background-color: #f8f8f8;
       display: none;
     }
+#arrowGridContainer{
+  margin-top:20px;
+  display:flex;
+  justify-content:center;
+}
+
+.arrowGrid{
+  display:grid;
+  grid-template-columns: repeat(5, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap:6px;
+}
+
+.arrowCell{
+  width:50px;
+  height:50px;
+  border:1px solid #999;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:22px;
+}
+
+.arrowActive{
+  background:#3498db;
+  color:white;
+  font-weight:bold;
+}
+
+    
   </style>
 </head>
 <body>
@@ -62,6 +92,7 @@
   </div>
   <div id="gameArea">
     <div id="targetDisplay"></div>
+    <div id="arrowGridContainer"></div>
     <input type="text" id="inputBox">
     <input type="text" id="input1" placeholder="KOTAK TEKS 1">
     <input type="text" id="input2" placeholder="KOTAK TEKS 2">
@@ -274,7 +305,7 @@ function prepareArrowStage(){
   arrowTarget = arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
 
   drawArrowGrid();
-  targetDisplay.textContent = `Gunakan panah untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
+  targetDisplay.textContent = `Gunakan panah (← ↑ → ↓) untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
 }
 
 
@@ -310,19 +341,23 @@ function prepareTabNavigation(){
 }
 
 function drawArrowGrid(){
-  let html="";
+  const container = document.getElementById("arrowGridContainer");
+  container.innerHTML = `<div class="arrowGrid"></div>`;
+  const grid = container.querySelector(".arrowGrid");
+
   for(let y=0;y<5;y++){
     for(let x=0;x<5;x++){
+      const cell = document.createElement("div");
+      cell.className = "arrowCell";
       if(x===arrowX && y===arrowY){
-        html += `<span style="background:#3498db;color:#fff;padding:6px;margin:3px;">${arrowGrid[y][x]}</span>`;
-      }else{
-        html += `<span style="border:1px solid #aaa;padding:6px;margin:3px;">${arrowGrid[y][x]}</span>`;
+        cell.classList.add("arrowActive");
       }
+      cell.innerText = arrowGrid[y][x];
+      grid.appendChild(cell);
     }
-    html+="<br>";
   }
-  targetDisplay.innerHTML = html;
 }
+
 
 
     document.addEventListener("keydown", (event) => {
