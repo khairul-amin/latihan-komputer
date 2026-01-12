@@ -315,7 +315,8 @@ function prepareArrowStage(){
 // STAGE 7 — TAB Navigation
 // =======================
 function prepareTabNavigation(){
-  hideArrowGrid(); 
+  hideArrowGrid();
+
   input1.style.display="block";
   input2.style.display="block";
   input3.style.display="block";
@@ -336,12 +337,14 @@ function prepareTabNavigation(){
 
   tabIndex = 0;
   targetTabIndex = Math.floor(Math.random()*4);
+  tabTargetText = getRandomStringUpperLower(6);
 
   targetDisplay.textContent =
-    `Gunakan TAB / SHIFT+TAB sampai fokus berada di kotak ${targetTabIndex+1}, lalu tekan ENTER`;
+    `Gunakan TAB / SHIFT+TAB sampai fokus berada di kotak ${targetTabIndex+1}, ketik: ${tabTargetText}, lalu tekan ENTER`;
 
   input1.focus();
 }
+
 
 function drawArrowGrid(){
   const container = document.getElementById("arrowGridContainer");
@@ -452,23 +455,27 @@ function hideArrowGrid(){
     event.preventDefault();
 
     if(event.shiftKey){
-      tabIndex = (tabIndex + 3) % 4;   // mundur
+      tabIndex = (tabIndex + 3) % 4;
     }else{
-      tabIndex = (tabIndex + 1) % 4;   // maju
+      tabIndex = (tabIndex + 1) % 4;
     }
 
     [input1,input2,input3,input4][tabIndex].focus();
   }
 
   if(event.key==="Enter"){
-    if(tabIndex === targetTabIndex){
+    const boxes = [input1,input2,input3,input4];
+
+    if(
+      tabIndex === targetTabIndex &&
+      boxes[tabIndex].value === tabTargetText
+    ){
       currentTask++;
       if(currentTask < 8){
         prepareTabNavigation();
       }else{
-        // unlock mouse
         document.body.style.cursor="default";
-        [input1,input2,input3,input4].forEach(i=>{
+        boxes.forEach(i=>{
           i.style.pointerEvents="auto";
         });
         nextStage();
@@ -476,6 +483,7 @@ function hideArrowGrid(){
     }
   }
 }
+
   });
 
     // Mulai permainan
