@@ -373,10 +373,13 @@ if(stage === 9){
       startTimer();
     }
 
-    if(stage===9){
-      initSelectStage();
-      selectStep = 0; 
-    }else{
+if(stage===9){
+  initSelectStage();
+  selectStep = 0;
+  isProcessing = false;
+  draw();          // ⬅️ WAJIB
+  return;          // ⬅️ hentikan flow normal
+}else{
       target = randPos();
       if(stage===5) dropZone = randPos(240,90);
     }
