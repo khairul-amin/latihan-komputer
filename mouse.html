@@ -61,7 +61,7 @@ const timerEl = document.getElementById('timer');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=2,currentTarget=0,isProcessing=false;
+let stage=1,targetCount=3,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
@@ -304,7 +304,8 @@ if(stage===9){
     ctx.strokeRect(dropZone.x,dropZone.y,dropZone.w,dropZone.h);
   }
 
-  // ===== TARGET =====
+// ===== TARGET (hanya untuk stage non-9) =====
+if(stage !== 9){
   ctx.fillStyle=stageColors[stage];
   ctx.fillRect(target.x,target.y,target.w,target.h);
 
@@ -313,7 +314,7 @@ if(stage===9){
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   ctx.fillText(stageNames[stage],target.x+target.w/2,target.y+target.h/2);
-
+}
   document.getElementById('stage').textContent=stage;
   if(stage === 9){
   document.getElementById('currentTarget').textContent = selectStep + 1;
