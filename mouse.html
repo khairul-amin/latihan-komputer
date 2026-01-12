@@ -348,22 +348,13 @@ function next(){
   setTimeout(()=>{
 
     // ===== STAGE 9: SELESAI BERDASARKAN selectStep =====
-    if(stage === 9){
-      stopTimer();
-      stage++;
-      currentTarget = 0;
-
-      if(stage>9){
-        showSummary();
-        return;
-      }
-
-      startTimer();
-      target = randPos();
-      isProcessing=false;
-      draw();
-      return;
-    }
+if(stage === 9){
+  // stage 9 selesai (dipanggil hanya setelah semua selectStep selesai)
+  stopTimer();
+  stage++;              // lanjut ke stage 10 (summary)
+  showSummary();
+  return;
+}
 
     // ===== STAGE NORMAL =====
     currentTarget++;
@@ -384,6 +375,7 @@ function next(){
 
     if(stage===9){
       initSelectStage();
+      selectStep = 0; 
     }else{
       target = randPos();
       if(stage===5) dropZone = randPos(240,90);
