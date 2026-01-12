@@ -351,8 +351,8 @@ let tabTargetText = "";
 // =======================
 function prepareArrowStage(){
   const c = document.getElementById("arrowGridContainer");
-  c.style.display = "flex";   // ← HIDUPKAN LAGI
-  c.innerHTML = "";          // reset isi lama
+  c.style.display = "flex";
+  c.innerHTML = "";
 
   document.body.style.cursor="not-allowed";
 
@@ -362,24 +362,30 @@ function prepareArrowStage(){
   input3.style.display="none";
   input4.style.display="none";
 
-  arrowGrid=[];
-  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for(let y=0;y<5;y++){
-    const row=[];
-    for(let x=0;x<5;x++){
-      row.push(chars[Math.floor(Math.random()*chars.length)]);
+  // GRID hanya dibuat SEKALI
+  if(!arrowGrid){
+    arrowGrid=[];
+    const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for(let y=0;y<5;y++){
+      const row=[];
+      for(let x=0;x<5;x++){
+        row.push(chars[Math.floor(Math.random()*chars.length)]);
+      }
+      arrowGrid.push(row);
     }
-    arrowGrid.push(row);
   }
 
   arrowX=0;
   arrowY=0;
-  arrowTarget = arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
+
+  // target BARU
+  arrowTarget =
+    arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
 
   drawArrowGrid();
-  targetDisplay.textContent =
-    `Gunakan panah (← ↑ → ↓) untuk menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
+  updateArrowInstruction();
 }
+
 
 
 
@@ -439,6 +445,11 @@ function hideArrowGrid(){
   const c = document.getElementById("arrowGridContainer");
   c.innerHTML = "";
   c.style.display = "none";
+}
+
+    function updateArrowInstruction(){
+  targetDisplay.textContent =
+    `Gunakan panah (← ↑ → ↓) menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
 }
 
 
@@ -511,17 +522,25 @@ function hideArrowGrid(){
     drawArrowGrid();
   }
 
-  if(event.key==="Enter"){
-    if(arrowGrid[arrowY][arrowX] === arrowTarget){
-      currentTask++;
-      if(currentTask < 8){
-        prepareArrowStage();
-      }else{
-        document.body.style.cursor="default";
-        nextStage();
-      }
+if(event.key==="Enter"){
+  if(arrowGrid[arrowY][arrowX] === arrowTarget){
+    currentTask++;
+
+    if(currentTask < 8){
+      arrowTarget =
+        arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
+      arrowX = 0;
+      arrowY = 0;
+      drawArrowGrid();
+      updateArrowInstruction();
+    }else{
+      arrowGrid = null; // reset
+      document.body.style.cursor="default";
+      nextStage();
     }
   }
+}
+
 } else if(stage===7){
   if(event.key==="Tab"){
     event.preventDefault();
