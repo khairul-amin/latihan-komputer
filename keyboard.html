@@ -80,15 +80,20 @@
     const input3 = document.getElementById("input3");
     const input4 = document.getElementById("input4");
 
-    
-
-
-
     let stage = 1;
     let currentTask = 0;
     let targetChar = "";
     let targetString = "";
     let attempts = 0;
+
+    // ===== STAGE 6 (Arrow) =====
+let arrowChars = "ABCDEFG";
+let arrowIndex = 0;
+let arrowTarget = 0;
+
+// ===== STAGE 7 (Tab) =====
+let tabTargetBox = 1;
+let tabTargetText = "";
 
     function getRandomChar() {
       const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -167,6 +172,15 @@
             taskDescription.textContent = "Isi salah satu kotak teks dengan kombinasi karakter tertentu"
             prepareMultiTextCombinationTask();
             break;
+        case 6:
+          taskDescription.textContent = "Navigasi menggunakan tombol panah (Arrow)";
+          prepareArrowTask();
+          break;
+        
+        case 7:
+          taskDescription.textContent = "Navigasi antar kolom menggunakan tombol TAB";
+          prepareTabTask();
+          break;
         default:
           alert("Selamat! Anda telah menyelesaikan semua tahap.");
           resetGame();
@@ -231,6 +245,55 @@
 
     }
 
+    // =======================
+// STAGE 6 — Arrow Navigation
+// =======================
+function prepareArrowTask(){
+  arrowIndex = 0;
+  arrowTarget = Math.floor(Math.random() * arrowChars.length);
+
+  let display = "";
+  for(let i=0;i<arrowChars.length;i++){
+    if(i===arrowIndex) display += "[" + arrowChars[i] + "] ";
+    else display += arrowChars[i] + " ";
+  }
+
+  targetDisplay.textContent =
+    "Gunakan tombol ← → untuk menuju huruf: " + arrowChars[arrowTarget] +
+    "\n\n" + display;
+
+  inputBox.style.display="none";
+  input1.style.display="none";
+  input2.style.display="none";
+  input3.style.display="none";
+  input4.style.display="none";
+}
+
+// =======================
+// STAGE 7 — TAB Navigation
+// =======================
+function prepareTabTask(){
+  input1.style.display="block";
+  input2.style.display="block";
+  input3.style.display="block";
+  input4.style.display="block";
+
+  input1.value="";
+  input2.value="";
+  input3.value="";
+  input4.value="";
+
+  tabTargetBox = Math.floor(Math.random()*4)+1;
+  tabTargetText = getRandomString(4);
+
+  targetDisplay.textContent =
+    "Gunakan tombol TAB untuk pindah ke kotak " +
+    tabTargetBox + ", ketik: " + tabTargetText + ", lalu tekan Enter";
+
+  document.getElementById("input1").focus();
+}
+
+
     document.addEventListener("keydown", (event) => {
       if (stage === 1) {
         // Tahap 1: Tekan tombol huruf/angka
@@ -289,11 +352,44 @@
             }
         }
             
-    }});
+    }else if(stage === 6){
+  if(event.key==="ArrowRight"){
+    if(arrowIndex < arrowChars.length-1) arrowIndex++;
+  }
+  if(event.key==="ArrowLeft"){
+    if(arrowIndex > 0) arrowIndex--;
+  }
+
+  let display="";
+  for(let i=0;i<arrowChars.length;i++){
+    if(i===arrowIndex) display+="[" + arrowChars[i] + "] ";
+    else display+=arrowChars[i] + " ";
+  }
+
+  targetDisplay.textContent =
+    "Gunakan tombol ← → untuk menuju huruf: " + arrowChars[arrowTarget] +
+    "\n\n" + display;
+
+  if(arrowIndex === arrowTarget){
+    currentTask++;
+    if(currentTask < 5) prepareArrowTask();
+    else nextStage();
+  }
+}
+
+else if(stage === 7){
+  if(event.key==="Enter"){
+    const box = document.getElementById("input"+tabTargetBox);
+    if(box.value === tabTargetText){
+      currentTask++;
+      if(currentTask < 5) prepareTabTask();
+      else nextStage();
+    }
+  }
+}   });
 
     // Mulai permainan
     resetGame();
   </script>
 </body>
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6ba2a144fc4f407781254bbf2313344d"}'></script><!-- End Cloudflare Web Analytics -->
 </html>
