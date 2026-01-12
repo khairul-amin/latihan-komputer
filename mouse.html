@@ -61,7 +61,7 @@ const timerEl = document.getElementById('timer');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight - document.getElementById('info').offsetHeight;
 
-let stage=1,targetCount=2,currentTarget=0,isProcessing=false;
+let stage=1,targetCount=3,currentTarget=0,isProcessing=false;
 let dragging=false, dragOffset={x:0,y:0};
 let scrollVal=0;
 
@@ -267,17 +267,25 @@ if(stage===9){
   ctx.fillStyle='#2c3e50';
   ctx.font='bold 20px Arial';
   ctx.textAlign='center';
-  ctx.fillText(`Seleksi dari ${t.from} ke ${t.to}`, canvas.width/2,32);
+  ctx.fillText(
+    `Seleksi dari ${t.from} ke ${t.to}`,
+    canvas.width/2,32
+  );
 
   ctx.font='16px Arial';
-  ctx.fillText('Klik + drag untuk memblok area secara presisi', canvas.width/2,54);
+  ctx.fillText(
+    'Klik + drag untuk memblok area secara presisi',
+    canvas.width/2,54
+  );
 
-  // Grid
+  // ===== GAMBAR GRID =====
   selectBoxes.forEach(b=>{
     ctx.fillStyle = b.selected ? '#3498db' : '#ecf0f1';
     ctx.fillRect(b.x,b.y,b.w,b.h);
+
     ctx.strokeStyle='#7f8c8d';
     ctx.strokeRect(b.x,b.y,b.w,b.h);
+
     ctx.fillStyle='#2c3e50';
     ctx.font='12px Arial';
     ctx.textAlign='center';
@@ -285,15 +293,21 @@ if(stage===9){
     ctx.fillText(b.label,b.x+b.w/2,b.y+b.h/2);
   });
 
-  // Drag area
+  // ===== GAMBAR AREA DRAG =====
   if(selectRect){
     ctx.strokeStyle='#e74c3c';
     ctx.lineWidth=2;
     ctx.setLineDash([6,4]);
-    ctx.strokeRect(selectRect.x,selectRect.y,selectRect.w,selectRect.h);
+    ctx.strokeRect(
+      selectRect.x,
+      selectRect.y,
+      selectRect.w,
+      selectRect.h
+    );
     ctx.setLineDash([]);
   }
-  // ⬅️ JANGAN return
+
+  return;
 }
 
 
