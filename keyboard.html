@@ -379,13 +379,13 @@ function prepareArrowStage(){
   arrowX = 0;
   arrowY = 0;
 
-  // target SELALU koordinat
   arrowTargetX = Math.floor(Math.random()*5);
   arrowTargetY = Math.floor(Math.random()*5);
 
   drawArrowGrid();
-  updateArrowInstruction();
+  updateArrowInstruction();   // ← ini wajib
 }
+
 
 
 
@@ -452,8 +452,9 @@ function hideArrowGrid(){
 function updateArrowInstruction(){
   const letter = arrowGrid[arrowTargetY][arrowTargetX];
   targetDisplay.textContent =
-    `Gunakan panah (← ↑ → ↓) menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
+    `Gunakan panah (← ↑ → ↓) menuju huruf: ${letter}, lalu tekan ENTER`;
 }
+
 
 
 
@@ -515,7 +516,7 @@ function updateArrowInstruction(){
             }
         }
             
-    }else if(stage===6){
+    }}else if(stage===6){
 
   if(event.key==="ArrowUp" && arrowY>0) arrowY--;
   if(event.key==="ArrowDown" && arrowY<4) arrowY++;
@@ -527,7 +528,7 @@ function updateArrowInstruction(){
   }
 
   if(event.key==="Enter"){
-    // HARUS tepat di target kotak
+    // hanya sah kalau tepat di target
     if(arrowX === arrowTargetX && arrowY === arrowTargetY){
       currentTask++;
 
@@ -545,6 +546,7 @@ function updateArrowInstruction(){
     }
   }
 }
+
  else if(stage===7){
   if(event.key==="Tab"){
     event.preventDefault();
