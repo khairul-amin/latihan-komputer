@@ -5,7 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Latihan Menggunakan Keyboard</title>
-  <style>
+  <style
+    #arrowGridContainer{
+  pointer-events: none;
+}
+
     body {
       margin: 0;
       display: flex;
@@ -366,15 +370,24 @@ function prepareArrowStage(){
   input4.style.display="none";
 
   arrowGrid = [];
-  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+const used = [];
+arrowGrid = [];
 
-  for(let y=0;y<5;y++){
-    const row=[];
-    for(let x=0;x<5;x++){
-      row.push(chars[Math.floor(Math.random()*chars.length)]);
-    }
-    arrowGrid.push(row);
+for(let y=0;y<5;y++){
+  const row=[];
+  for(let x=0;x<5;x++){
+    let c;
+    do{
+      c = pool[Math.floor(Math.random()*pool.length)];
+    }while(used.includes(c));
+
+    used.push(c);
+    row.push(c);
   }
+  arrowGrid.push(row);
+}
+
 
   arrowX = 0;
   arrowY = 0;
