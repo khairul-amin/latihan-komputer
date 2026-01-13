@@ -379,8 +379,7 @@ function prepareArrowStage(){
   arrowX = 0;
   arrowY = 0;
 
-  arrowTargetX = Math.floor(Math.random()*5);
-  arrowTargetY = Math.floor(Math.random()*5);
+randomArrowTarget();
 
   drawArrowGrid();
   updateArrowInstruction();   // ← ini wajib
@@ -455,6 +454,12 @@ function updateArrowInstruction(){
     `Gunakan panah (← ↑ → ↓) menuju huruf: ${letter}, lalu tekan ENTER`;
 }
 
+function randomArrowTarget(){
+  do{
+    arrowTargetX = Math.floor(Math.random()*5);
+    arrowTargetY = Math.floor(Math.random()*5);
+  }while(arrowTargetX===0 && arrowTargetY===0);
+}
 
 
 
@@ -533,8 +538,7 @@ function updateArrowInstruction(){
       currentTask++;
 
       if(currentTask < 8){
-        arrowTargetX = Math.floor(Math.random()*5);
-        arrowTargetY = Math.floor(Math.random()*5);
+        randomArrowTarget();
         arrowX = 0;
         arrowY = 0;
         drawArrowGrid();
