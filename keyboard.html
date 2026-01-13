@@ -186,10 +186,12 @@ function jumpToStage(s){
     let attempts = 0;
 
     // ===== STAGE 6 (Arrow) =====
-    let arrowGrid = null;
-    let arrowX = 0;
-    let arrowY = 0;
-    let arrowTarget = "";
+  let arrowGrid = [];
+  let arrowX = 0;
+  let arrowY = 0;
+  let arrowTargetX = 0;
+  let arrowTargetY = 0;
+
 
 // ===== STAGE 7 (Tab) =====
 let tabTargetBox = 1;
@@ -363,29 +365,28 @@ function prepareArrowStage(){
   input3.style.display="none";
   input4.style.display="none";
 
-  // GRID hanya dibuat SEKALI
-  if(!arrowGrid){
-    arrowGrid=[];
-    const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    for(let y=0;y<5;y++){
-      const row=[];
-      for(let x=0;x<5;x++){
-        row.push(chars[Math.floor(Math.random()*chars.length)]);
-      }
-      arrowGrid.push(row);
+  arrowGrid = [];
+  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  for(let y=0;y<5;y++){
+    const row=[];
+    for(let x=0;x<5;x++){
+      row.push(chars[Math.floor(Math.random()*chars.length)]);
     }
+    arrowGrid.push(row);
   }
 
-  arrowX=0;
-  arrowY=0;
+  arrowX = 0;
+  arrowY = 0;
 
-  // target BARU
-  arrowTarget =
-    arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
+  // target SELALU koordinat
+  arrowTargetX = Math.floor(Math.random()*5);
+  arrowTargetY = Math.floor(Math.random()*5);
 
   drawArrowGrid();
   updateArrowInstruction();
 }
+
 
 
 
@@ -448,7 +449,8 @@ function hideArrowGrid(){
   c.style.display = "none";
 }
 
-    function updateArrowInstruction(){
+function updateArrowInstruction(){
+  const letter = arrowGrid[arrowTargetY][arrowTargetX];
   targetDisplay.textContent =
     `Gunakan panah (← ↑ → ↓) menuju huruf: ${arrowTarget}, lalu tekan ENTER`;
 }
@@ -514,6 +516,7 @@ function hideArrowGrid(){
         }
             
     }else if(stage===6){
+
   if(event.key==="ArrowUp" && arrowY>0) arrowY--;
   if(event.key==="ArrowDown" && arrowY<4) arrowY++;
   if(event.key==="ArrowLeft" && arrowX>0) arrowX--;
@@ -523,26 +526,26 @@ function hideArrowGrid(){
     drawArrowGrid();
   }
 
-if(event.key==="Enter"){
-  if(arrowGrid[arrowY][arrowX] === arrowTarget){
-    currentTask++;
+  if(event.key==="Enter"){
+    // HARUS tepat di target kotak
+    if(arrowX === arrowTargetX && arrowY === arrowTargetY){
+      currentTask++;
 
-    if(currentTask < 8){
-      arrowTarget =
-        arrowGrid[Math.floor(Math.random()*5)][Math.floor(Math.random()*5)];
-      arrowX = 0;
-      arrowY = 0;
-      drawArrowGrid();
-      updateArrowInstruction();
-    }else{
-      arrowGrid = null; // reset
-      document.body.style.cursor="default";
-      nextStage();
+      if(currentTask < 8){
+        arrowTargetX = Math.floor(Math.random()*5);
+        arrowTargetY = Math.floor(Math.random()*5);
+        arrowX = 0;
+        arrowY = 0;
+        drawArrowGrid();
+        updateArrowInstruction();
+      }else{
+        document.body.style.cursor="default";
+        nextStage();
+      }
     }
   }
 }
-
-} else if(stage===7){
+ else if(stage===7){
   if(event.key==="Tab"){
     event.preventDefault();
 
